@@ -43,6 +43,7 @@
             <option value="">--Not Selected--</option>
         </select>
         <button id="restore-button">Restore</button>
+        <button id="show-current-button">Show Current Data</button>
     </div>
     <div class="main-content">
         <label for="search">Search by Question ID:</label>
@@ -209,6 +210,14 @@
                             }
                         }
                     });
+                }
+            });
+
+            $('#show-current-button').click(function() {
+                var language = $('#language').val();
+                var table = $('#table').val();
+                if (language && table) {
+                    fetchTableContent(language, table);
                 }
             });
 
