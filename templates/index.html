@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Database Viewer</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            display: flex;
+        }
+        .sidebar {
+            width: 200px;
+            padding: 20px;
+        }
+        .main-content {
+            flex: 1;
+            padding: 20px;
+        }
+        td {
+            padding: 8px;
+        }
+        td[contenteditable="true"] {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <label for="language">Select Language:</label>
+        <select id="language" name="language">
+            <option value="russian" selected>Russian</option>
+            <option value="kazakh">Kazakh</option>
+        </select>
+        <br><br>
+        <label for="table">Select Table:</label>
+        <select id="table" name="table">
+            <option value="">--Select Table--</option>
+        </select>
+        <br><br>
+        <label for="backup">Select Backup:</label>
+        <select id="backup" name="backup">
+            <option value="">--Not Selected--</option>
+        </select>
+        <button id="restore-button">Restore</button>
+    </div>
+    <div class="main-content">
+        <label for="search">Search by Question ID:</label>
+        <input type="text" id="search" name="search" placeholder="Enter Question ID Prefix">
+        <button id="search-button">Search</button>
+        <br>
+        <button id="reverse-button">Reverse Order</button>
+        <br><br>
+        <table id="table-content" border="1">
+            <thead>
+                <tr id="table-headers"></tr>
+            </thead>
+            <tbody id="table-rows"></tbody>
+        </table>
+    </div>
+    <script>
+        $(document).ready(function() {
+            function fetchTableContent(language, table) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/get_table_content',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ language: language, table: table }),
+                    success: function(response) {
+                        displayTableContent(response.columns, response.content);
+                    }
+                });
+            }
+
+            function fetchBackupContent(language, table, backup) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/get_backup_content',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ language: language, table: table, backup: backup }),
+                    success: function(response) {
+                        displayTableContent(response.columns, response.content);
+                    }
+                });
+            }
+
+            function displayTableContent(headers, content) {
+                $('#table-headers').empty();
+                $('#table-rows').empty();
+                $.each(headers, function(index, header) {
+                    $('#table-headers').append('<th>' + header + '</th>');
+                });
+                $('#table-headers').append('<th>Action</th>');
+                $.each(content, function(index, row) {
+                    var rowHtml = '<tr>';
+                    $.each(row, function(i, cell) {
+                        rowHtml += '<td contenteditable="true" data-column="' + headers[i] + '" data-row-id="' + (index + 1) + '">' + cell + '</td>';
+                    });
+                    rowHtml += '<td><button class="delete-row" data-row-id="' + (index + 1) + '">Delete</button></td>';
+                    rowHtml += '</tr>';
+                    $('#table-rows').append(rowHtml);
+                });
+            }
+
+            function fetchBackups(language, table) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/get_backups',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ language: language, table: table }),
+                    success: function(response) {
+                        $('#backup').empty().append('<option value="">--Not Selected--</option>');
+                        $.each(response, function(index, backup) {
+                            $('#backup').append('<option value="' + backup + '">' + backup + '</option>');
+                        });
+                    }
+                });
+            }
+
+            function performSearch() {
+                var language = $('#language').val();
+                var table = $('#table').val();
+                var search = $('#search').val();
+                if (language && table) {
+                    if (search) {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/search_by_question_id',
+                            contentType: 'application/json',
+                            data: JSON.stringify({ language: language, table: table, search: search }),
+                            success: function(response) {
+                                displayTableContent(response.columns, response.content);
+                            }
+                        });
+                    } else {
+                        fetchTableContent(language, table);
+                    }
+                }
+            }
+
+            function reverseTable() {
+                var rows = $('#table-rows').children().toArray();
+                $('#table-rows').empty().append(rows.reverse());
+            }
+
+            $('#search-button').click(function() {
+                performSearch();
+            });
+
+            $('#search').keypress(function(e) {
+                if (e.which == 13) { // Enter key pressed
+                    performSearch();
+                }
+            });
+
+            $('#reverse-button').click(function() {
+                reverseTable();
+            });
+
+            $('#language').change(function() {
+                var language = $(this).val();
+                $.ajax({
+                    type: 'POST',
+                    url: '/get_tables',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ language: language }),
+                    success: function(response) {
+                        $('#table').empty().append('<option value="">--Select Table--</option>');
+                        $.each(response, function(index, table) {
+                            $('#table').append('<option value="' + table + '">' + table + '</option>');
+                        });
+                    }
+                });
+            });
+
+            $('#table').change(function() {
+                var language = $('#language').val();
+                var table = $(this).val();
+                if (language && table) {
+                    fetchTableContent(language, table);
+                    fetchBackups(language, table);
+                }
+            });
+
+            $('#backup').change(function() {
+                var language = $('#language').val();
+                var table = $('#table').val();
+                var backup = $(this).val();
+                if (backup === "") {
+                    fetchTableContent(language, table);
+                } else if (language && table && backup) {
+                    fetchBackupContent(language, table, backup);
+                }
+            });
+
+            $('#restore-button').click(function() {
+                var language = $('#language').val();
+                var table = $('#table').val();
+                var backup = $('#backup').val();
+                if (language && table && backup) {
+                    $.ajax({
+                        type: 'POST',
+                        url: '/restore_backup',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ language: language, table: table, backup: backup }),
+                        success: function(response) {
+                            if (response.success) {
+                                fetchTableContent(language, table);
+                            }
+                        }
+                    });
+                }
+            });
+
+            $(document).on('blur', 'td[contenteditable="true"]', function() {
+                var new_value = $(this).text();
+                var column = $(this).data('column');
+                var row_id = $(this).data('row-id');
+                var language = $('#language').val();
+                var table = $('#table').val();
+                $.ajax({
+                    type: 'POST',
+                    url: '/update_cell',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ language: language, table: table, column: column, row_id: row_id, new_value: new_value }),
+                    success: function(response) {
+                        if (response.success) {
+                            fetchBackups(language, table); // Refresh backups after update
+                        }
+                    }
+                });
+            });
+
+            $(document).on('click', '.delete-row', function() {
+                var row_id = $(this).data('row-id');
+                var language = $('#language').val();
+                var table = $('#table').val();
+                $.ajax({
+                    type: 'POST',
+                    url: '/delete_row',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ language: language, table: table, row_id: row_id }),
+                    success: function(response) {
+                        if (response.success) {
+                            $('#table').trigger('change');
+                            fetchBackups(language, table); // Refresh backups after deletion
+                        }
+                    }
+                });
+            });
+
+            // Trigger the change event on page load to load the tables for the default language
+            $('#language').trigger('change');
+        });
+    </script>
+</body>
+</html>
