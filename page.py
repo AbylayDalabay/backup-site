@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import sqlite3
 import datetime
+import json
 
 app = Flask(__name__)
 
@@ -84,6 +85,39 @@ def restore_backup(language, table, backup):
     conn.commit()
     conn.close()
 
+# Function to insert data into table
+def insert_data_into_table(database, table_name, data):
+    conn = sqlite3.connect(database)
+    cursor = conn.cursor()
+    check_query = f'SELECT EXISTS(SELECT 1 FROM {table_name} WHERE question = ? LIMIT 1)'
+    insert_query = f'INSERT INTO {table_name} (question, answer, question_id, data_type) VALUES (?, ?, ?, ?)'
+
+    for entry in data:
+        question = entry.get('question')
+        answer = entry.get('answer')
+        question_id = entry.get('question_id', '111')
+        data_type = entry.get('data_type', 'manual')
+
+        cursor.execute(check_query, (question,))
+        exists = cursor.fetchone()[0]
+
+        if not exists:
+            cursor.execute(insert_query, (question, answer, question_id, data_type))
+        else:
+            print(f"Question already exists: {question}")
+
+    conn.commit()
+    conn.close()
+
+# Function to get last row id
+def get_last_row_id(database, table_name):
+    conn = sqlite3.connect(database)
+    cursor = conn.cursor()
+    cursor.execute(f'SELECT MAX(rowid) FROM {table_name}')
+    last_row_id = cursor.fetchone()[0]
+    conn.close()
+    return last_row_id
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -129,22 +163,6 @@ def delete_row_route():
     delete_row(database, table, row_id)
     return jsonify(success=True)
 
-@app.route('/search_by_question_id', methods=['POST'])
-def search_by_question_id():
-    data = request.get_json()
-    language = data.get('language')
-    table = data.get('table')
-    search = data.get('search')
-    database = 'cards_faq_kz.db' if language == 'kazakh' else 'cards_faq_ru.db'
-    conn = sqlite3.connect(database)
-    cursor = conn.cursor()
-    query = f"SELECT * FROM {table} WHERE question_id LIKE ?"
-    cursor.execute(query, (search + '%',))
-    content = cursor.fetchall()
-    columns = [description[0] for description in cursor.description]
-    conn.close()
-    return jsonify({'columns': columns, 'content': content})
-
 @app.route('/get_backups', methods=['POST'])
 def get_backups_route():
     data = request.get_json()
@@ -173,5 +191,52 @@ def restore_backup_route():
     restore_backup(language, table, backup)
     return jsonify(success=True)
 
+@app.route('/insert_data', methods=['POST'])
+def insert_data_route():
+    data = request.get_json()
+    language = data.get('language')
+    table = data.get('table')
+    new_data = data.get('data')
+    database = 'cards_faq_kz.db' if language == 'kazakh' else 'cards_faq_ru.db'
+    create_backup(language, table)  # Create backup before inserting
+    insert_data_into_table(database, table, new_data)
+    return jsonify(success=True)
+
+@app.route('/get_last_row_id', methods=['POST'])
+def get_last_row_id_route():
+    data = request.get_json()
+    language = data.get('language')
+    table = data.get('table')
+    database = 'cards_faq_kz.db' if language == 'kazakh' else 'cards_faq_ru.db'
+    last_row_id = get_last_row_id(database, table)
+    return jsonify(last_row_id=last_row_id)
+
+@app.route('/insert_json', methods=['POST'])
+def insert_json_route():
+    data = request.get_json()
+    language = data.get('language')
+    table = data.get('table')
+    json_data = data.get('data')
+    database = 'cards_faq_kz.db' if language == 'kazakh' else 'cards_faq_ru.db'
+    create_backup(language, table)  # Create backup before inserting
+
+    valid_entries = []
+    for entry in json_data:
+        if 'question_ru' in entry and 'answer_ru' in entry:
+            valid_entries.append({
+                'question': entry['question_ru'],
+                'answer': entry['answer_ru'],
+                'data_type': entry.get('type', 'manual')
+            })
+        elif 'question_kz' in entry and 'answer_kz' in entry:
+            valid_entries.append({
+                'question': entry['question_kz'],
+                'answer': entry['answer_kz'],
+                'data_type': entry.get('type', 'manual')
+            })
+
+    insert_data_into_table(database, table, valid_entries)
+    return jsonify(success=True)
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')

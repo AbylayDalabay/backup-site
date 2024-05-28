@@ -4,24 +4,83 @@
     <meta charset="UTF-8">
     <title>Database Viewer</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <style>
         body {
             display: flex;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            height: 100vh;
         }
         .sidebar {
-            width: 200px;
+            width: 250px;
             padding: 20px;
+            background-color: #3a3a3a;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        .sidebar label, .sidebar select, .sidebar button {
+            margin-bottom: 15px;
+        }
+        .sidebar select, .sidebar button {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+        .sidebar select {
+            background-color: #fff;
+            color: #333;
+        }
+        .sidebar button {
+            background-color: #5a5a5a;
+            color: #fff;
+            cursor: pointer;
+        }
+        .sidebar button:hover {
+            background-color: #6a6a6a;
         }
         .main-content {
             flex: 1;
             padding: 20px;
+            overflow: auto;
         }
-        td {
+        .main-content section {
+            margin-bottom: 20px;
+        }
+        .main-content section .toggle-button, .main-content section .submit-json-button {
+            padding: 10px;
+            background-color: #5a5a5a;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+        .main-content section .toggle-button:hover, .main-content section .submit-json-button:hover {
+            background-color: #6a6a6a;
+        }
+        table.dataTable {
+            width: 100% !important;
+            border-collapse: collapse;
+        }
+        table.dataTable th, table.dataTable td {
             padding: 8px;
-        }
-        td[contenteditable="true"] {
-            background-color: #f0f0f0;
             border: 1px solid #ddd;
+        }
+        table.dataTable thead th {
+            background-color: #6a6a6a;
+            color: #fff;
+        }
+        table.dataTable tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+        .hidden {
+            display: none;
         }
     </style>
 </head>
@@ -32,12 +91,10 @@
             <option value="russian" selected>Russian</option>
             <option value="kazakh">Kazakh</option>
         </select>
-        <br><br>
         <label for="table">Select Table:</label>
         <select id="table" name="table">
             <option value="">--Select Table--</option>
         </select>
-        <br><br>
         <label for="backup">Select Backup:</label>
         <select id="backup" name="backup">
             <option value="">--Not Selected--</option>
@@ -46,21 +103,43 @@
         <button id="show-current-button">Show Current Data</button>
     </div>
     <div class="main-content">
-        <label for="search">Search by Question ID:</label>
-        <input type="text" id="search" name="search" placeholder="Enter Question ID Prefix">
-        <button id="search-button">Search</button>
-        <br>
-        <button id="reverse-button">Reverse Order</button>
-        <br><br>
-        <table id="table-content" border="1">
-            <thead>
-                <tr id="table-headers"></tr>
-            </thead>
-            <tbody id="table-rows"></tbody>
-        </table>
+        <section id="insert-section" class="hidden">
+            <button class="toggle-button" id="toggle-insert-section">Show Insert Section</button>
+            <div class="section-content">
+                <form id="insert-form">
+                    <label for="question">Question:</label>
+                    <input type="text" id="question" name="question"><br>
+                    <label for="answer">Answer:</label>
+                    <input type="text" id="answer" name="answer"><br>
+                    <label for="data_type">Data Type:</label>
+                    <input type="text" id="data_type" name="data_type" value="manual"><br>
+                    <button type="submit">Submit</button>
+                </form>
+                <button id="toggle-json-section" class="toggle-button">Insert JSON</button>
+                <div id="json-section" class="hidden">
+                    <textarea id="json-input" rows="10" cols="50" placeholder="Enter JSON data here"></textarea>
+                    <button id="insert-json-button" class="submit-json-button">Submit JSON</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="table-section">
+            <button class="toggle-button" id="toggle-table-section">Hide Table Section</button>
+            <div class="section-content">
+                <button id="reverse-button" class="toggle-button">Reverse Order</button>
+                <table id="table-content" class="display" style="width:100%">
+                    <thead>
+                        <tr id="table-headers"></tr>
+                    </thead>
+                    <tbody id="table-rows"></tbody>
+                </table>
+            </div>
+        </section>
     </div>
     <script>
         $(document).ready(function() {
+            var originalValues = {};
+
             function fetchTableContent(language, table) {
                 $.ajax({
                     type: 'POST',
@@ -88,19 +167,25 @@
             function displayTableContent(headers, content) {
                 $('#table-headers').empty();
                 $('#table-rows').empty();
+                originalValues = {};
+
                 $.each(headers, function(index, header) {
                     $('#table-headers').append('<th>' + header + '</th>');
                 });
                 $('#table-headers').append('<th>Action</th>');
+
                 $.each(content, function(index, row) {
                     var rowHtml = '<tr>';
                     $.each(row, function(i, cell) {
-                        rowHtml += '<td contenteditable="true" data-column="' + headers[i] + '" data-row-id="' + (index + 1) + '">' + cell + '</td>';
+                        var cellId = 'row-' + index + '-col-' + i;
+                        rowHtml += '<td id="' + cellId + '" contenteditable="true" data-column="' + headers[i] + '" data-row-id="' + (index + 1) + '">' + cell + '</td>';
+                        originalValues[cellId] = cell;
                     });
                     rowHtml += '<td><button class="delete-row" data-row-id="' + (index + 1) + '">Delete</button></td>';
                     rowHtml += '</tr>';
                     $('#table-rows').append(rowHtml);
                 });
+                $('#table-content').DataTable();
             }
 
             function fetchBackups(language, table) {
@@ -118,41 +203,10 @@
                 });
             }
 
-            function performSearch() {
-                var language = $('#language').val();
-                var table = $('#table').val();
-                var search = $('#search').val();
-                if (language && table) {
-                    if (search) {
-                        $.ajax({
-                            type: 'POST',
-                            url: '/search_by_question_id',
-                            contentType: 'application/json',
-                            data: JSON.stringify({ language: language, table: table, search: search }),
-                            success: function(response) {
-                                displayTableContent(response.columns, response.content);
-                            }
-                        });
-                    } else {
-                        fetchTableContent(language, table);
-                    }
-                }
-            }
-
             function reverseTable() {
                 var rows = $('#table-rows').children().toArray();
                 $('#table-rows').empty().append(rows.reverse());
             }
-
-            $('#search-button').click(function() {
-                performSearch();
-            });
-
-            $('#search').keypress(function(e) {
-                if (e.which == 13) { // Enter key pressed
-                    performSearch();
-                }
-            });
 
             $('#reverse-button').click(function() {
                 reverseTable();
@@ -178,8 +232,15 @@
                 var language = $('#language').val();
                 var table = $(this).val();
                 if (language && table) {
+                    $('#insert-section').removeClass('hidden');
+                    $('#toggle-insert-section').text('Hide Insert Section');
+                    $('#table-section').removeClass('hidden');
+                    $('#toggle-table-section').text('Hide Table Section');
                     fetchTableContent(language, table);
                     fetchBackups(language, table);
+                } else {
+                    $('#insert-section').addClass('hidden');
+                    $('#table-section').addClass('hidden');
                 }
             });
 
@@ -222,22 +283,28 @@
             });
 
             $(document).on('blur', 'td[contenteditable="true"]', function() {
+                var cellId = $(this).attr('id');
                 var new_value = $(this).text();
-                var column = $(this).data('column');
-                var row_id = $(this).data('row-id');
-                var language = $('#language').val();
-                var table = $('#table').val();
-                $.ajax({
-                    type: 'POST',
-                    url: '/update_cell',
-                    contentType: 'application/json',
-                    data: JSON.stringify({ language: language, table: table, column: column, row_id: row_id, new_value: new_value }),
-                    success: function(response) {
-                        if (response.success) {
-                            fetchBackups(language, table); // Refresh backups after update
+                var original_value = originalValues[cellId];
+                
+                if (new_value !== original_value) {
+                    var column = $(this).data('column');
+                    var row_id = $(this).data('row-id');
+                    var language = $('#language').val();
+                    var table = $('#table').val();
+                    $.ajax({
+                        type: 'POST',
+                        url: '/update_cell',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ language: language, table: table, column: column, row_id: row_id, new_value: new_value }),
+                        success: function(response) {
+                            if (response.success) {
+                                originalValues[cellId] = new_value;
+                                fetchBackups(language, table);
+                            }
                         }
-                    }
-                });
+                    });
+                }
             });
 
             $(document).on('click', '.delete-row', function() {
@@ -252,13 +319,98 @@
                     success: function(response) {
                         if (response.success) {
                             $('#table').trigger('change');
-                            fetchBackups(language, table); // Refresh backups after deletion
+                            fetchBackups(language, table);
                         }
                     }
                 });
             });
 
-            // Trigger the change event on page load to load the tables for the default language
+            $('#insert-form').submit(function(event) {
+                event.preventDefault();
+                var question = $('#question').val();
+                var answer = $('#answer').val();
+                var data_type = $('#data_type').val();
+                var language = $('#language').val();
+                var table = $('#table').val();
+                if (language && table && question && answer) {
+                    $.ajax({
+                        type: 'POST',
+                        url: '/get_last_row_id',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ language: language, table: table }),
+                        success: function(response) {
+                            var question_id = response.last_row_id + 1;
+                            var new_data = [{ question: question, answer: answer, question_id: question_id, data_type: data_type }];
+                            $.ajax({
+                                type: 'POST',
+                                url: '/insert_data',
+                                contentType: 'application/json',
+                                data: JSON.stringify({ language: language, table: table, data: new_data }),
+                                success: function(response) {
+                                    if (response.success) {
+                                        fetchTableContent(language, table);
+                                        fetchBackups(language, table);
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+
+            $('#toggle-json-section').click(function() {
+                $('#json-section').toggle();
+            });
+
+            $('#insert-json-button').click(function() {
+                var jsonInput = $('#json-input').val();
+                var language = $('#language').val();
+                var table = $('#table').val();
+                try {
+                    var jsonData = JSON.parse(jsonInput);
+                    if (Array.isArray(jsonData) && jsonData.length > 0) {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/insert_json',
+                            contentType: 'application/json',
+                            data: JSON.stringify({ language: language, table: table, data: jsonData }),
+                            success: function(response) {
+                                if (response.success) {
+                                    fetchTableContent(language, table);
+                                    fetchBackups(language, table);
+                                }
+                            }
+                        });
+                    } else {
+                        alert('Invalid JSON format');
+                    }
+                } catch (e) {
+                    alert('Invalid JSON format');
+                }
+            });
+
+            $('#toggle-insert-section').click(function() {
+                var buttonText = $(this).text();
+                if (buttonText === 'Hide Insert Section') {
+                    $('#insert-section .section-content').hide();
+                    $(this).text('Show Insert Section');
+                } else {
+                    $('#insert-section .section-content').show();
+                    $(this).text('Hide Insert Section');
+                }
+            });
+
+            $('#toggle-table-section').click(function() {
+                var buttonText = $(this).text();
+                if (buttonText === 'Hide Table Section') {
+                    $('#table-section .section-content').hide();
+                    $(this).text('Show Table Section');
+                } else {
+                    $('#table-section .section-content').show();
+                    $(this).text('Hide Table Section');
+                }
+            });
+
             $('#language').trigger('change');
         });
     </script>
