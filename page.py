@@ -251,12 +251,24 @@ def search_route():
     conn = sqlite3.connect(database)
     cursor = conn.cursor()
     
-    cursor.execute(f"SELECT * FROM {table_type} WHERE question LIKE ? OR answer LIKE ?", (f'%{query}%', f'%{query}%'))
+    # Fetch the column names for the table
+    cursor.execute(f"PRAGMA table_info({table_type})")
+    columns_info = cursor.fetchall()
+    columns = [column[1] for column in columns_info]
+    
+    # Construct the search query dynamically
+    search_conditions = " OR ".join([f"{column} LIKE ?" for column in columns])
+    search_query = f"SELECT * FROM {table_type} WHERE {search_conditions}"
+    
+    # Execute the search query
+    search_params = [f'%{query}%'] * len(columns)
+    cursor.execute(search_query, search_params)
     content = cursor.fetchall()
     columns = [description[0] for description in cursor.description]
     conn.close()
     
     return jsonify(success=True, results={'columns': columns, 'content': content})
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=7691)
