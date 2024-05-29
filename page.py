@@ -238,5 +238,25 @@ def insert_json_route():
     insert_data_into_table(database, table, valid_entries)
     return jsonify(success=True)
 
+@app.route('/search', methods=['POST'])
+def search_route():
+    data = request.get_json()
+    query = data.get('query')
+    table_type = data.get('table_type')
+    
+    if not query:
+        return jsonify(success=False, results=[])
+    
+    database = 'cards_faq_kz.db' if 'kz' in table_type else 'cards_faq_ru.db'
+    conn = sqlite3.connect(database)
+    cursor = conn.cursor()
+    
+    cursor.execute(f"SELECT * FROM {table_type} WHERE question LIKE ? OR answer LIKE ?", (f'%{query}%', f'%{query}%'))
+    content = cursor.fetchall()
+    columns = [description[0] for description in cursor.description]
+    conn.close()
+    
+    return jsonify(success=True, results={'columns': columns, 'content': content})
+
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0', port=7691)
