@@ -49,7 +49,9 @@
         .main-content section {
             margin-bottom: 20px;
         }
-        .main-content section .toggle-button, .main-content section .submit-json-button {
+        .main-content section .toggle-button, 
+        .main-content section .submit-json-button,
+        .main-content section button {
             padding: 10px;
             background-color: #5a5a5a;
             color: #fff;
@@ -58,16 +60,22 @@
             cursor: pointer;
             margin-bottom: 15px;
         }
-        .main-content section .toggle-button:hover, .main-content section .submit-json-button:hover {
+        .main-content section .toggle-button:hover, 
+        .main-content section .submit-json-button:hover,
+        .main-content section button:hover {
             background-color: #6a6a6a;
         }
         table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
         table th, table td {
             padding: 8px;
             border: 1px solid #ddd;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         table thead th {
             background-color: #6a6a6a;
@@ -76,8 +84,61 @@
         table tbody tr:hover {
             background-color: #f1f1f1;
         }
+        .action-cell {
+            width: 100px; /* Smaller width for action cells */
+        }
         .hidden {
             display: none;
+        }
+        .expanded {
+            white-space: normal;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .form-group textarea {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            resize: vertical;
+        }
+        .search-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .search-container input {
+            flex: 1;
+            padding: 10px 20px;
+            border: 1px solid #ddd;
+            border-radius: 50px;
+            font-size: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .search-container button {
+            margin-left: 10px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #5a5a5a;
+            color: #fff;
+            cursor: pointer;
+        }
+        .search-container button:hover {
+            background-color: #6a6a6a;
         }
     </style>
 </head>
@@ -104,12 +165,18 @@
             <button class="toggle-button" id="toggle-insert-section">Show Insert Section</button>
             <div class="section-content">
                 <form id="insert-form">
-                    <label for="question">Question:</label>
-                    <input type="text" id="question" name="question"><br>
-                    <label for="answer">Answer:</label>
-                    <input type="text" id="answer" name="answer"><br>
-                    <label for="data_type">Data Type:</label>
-                    <input type="text" id="data_type" name="data_type" value="manual"><br>
+                    <div class="form-group">
+                        <label for="question">Question:</label>
+                        <input type="text" id="question" name="question">
+                    </div>
+                    <div class="form-group">
+                        <label for="answer">Answer:</label>
+                        <textarea id="answer" name="answer" rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="data_type">Data Type:</label>
+                        <input type="text" id="data_type" name="data_type" value="manual">
+                    </div>
                     <button type="submit">Submit</button>
                 </form>
                 <button id="toggle-json-section" class="toggle-button">Insert JSON</button>
@@ -124,8 +191,11 @@
             <button class="toggle-button" id="toggle-table-section">Hide Table Section</button>
             <div class="section-content">
                 <button id="reverse-button" class="toggle-button">Reverse Order</button>
-                <input type="text" id="search-input" placeholder="Search...">
-                <table id="table-content" style="width:100%">
+                <div class="search-container">
+                    <input type="text" id="search-input" placeholder="Search...">
+                    <button id="search-button">Search</button>
+                </div>
+                <table id="table-content">
                     <thead>
                         <tr id="table-headers"></tr>
                     </thead>
@@ -180,6 +250,7 @@
                 });
                 var actionTh = document.createElement('th');
                 actionTh.textContent = 'Action';
+                actionTh.className = 'action-cell';
                 tableHeaders.appendChild(actionTh);
 
                 content.forEach((row, rowIndex) => {
@@ -192,14 +263,29 @@
                         td.dataset.column = headers[cellIndex];
                         td.dataset.rowId = rowIndex + 1;
                         td.textContent = cell;
+                        td.style.maxWidth = '150px';
+                        td.style.cursor = 'pointer';
                         originalValues[cellId] = cell;
+                        td.addEventListener('click', function() {
+                            td.classList.toggle('expanded');
+                        });
                         tr.appendChild(td);
                     });
                     var actionTd = document.createElement('td');
+                    actionTd.className = 'action-cell';
                     var deleteButton = document.createElement('button');
                     deleteButton.className = 'delete-row';
                     deleteButton.dataset.rowId = rowIndex + 1;
                     deleteButton.textContent = 'Delete';
+                    deleteButton.style.padding = '5px 10px';
+                    deleteButton.style.backgroundColor = '#e74c3c';
+                    deleteButton.style.color = '#fff';
+                    deleteButton.style.border = 'none';
+                    deleteButton.style.borderRadius = '3px';
+                    deleteButton.style.cursor = 'pointer';
+                    deleteButton.style.marginBottom = '15px';
+                    deleteButton.style.marginTop = '10px';
+                    deleteButton.style.marginRight = '5px';
                     actionTd.appendChild(deleteButton);
                     tr.appendChild(actionTd);
                     tableRows.appendChild(tr);
