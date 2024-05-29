@@ -139,7 +139,8 @@
     <script>
         $(document).ready(function() {
             var originalValues = {};
-
+            var selectedTable = ""; // Global variable to store the selected table name
+    
             function fetchTableContent(language, table) {
                 $.ajax({
                     type: 'POST',
@@ -151,7 +152,7 @@
                     }
                 });
             }
-
+    
             function fetchBackupContent(language, table, backup) {
                 $.ajax({
                     type: 'POST',
@@ -163,17 +164,17 @@
                     }
                 });
             }
-
+    
             function displayTableContent(headers, content) {
                 $('#table-headers').empty();
                 $('#table-rows').empty();
                 originalValues = {};
-
+    
                 $.each(headers, function(index, header) {
                     $('#table-headers').append('<th>' + header + '</th>');
                 });
                 $('#table-headers').append('<th>Action</th>');
-
+    
                 $.each(content, function(index, row) {
                     var rowHtml = '<tr>';
                     $.each(row, function(i, cell) {
@@ -187,7 +188,7 @@
                 });
                 $('#table-content').DataTable();
             }
-
+    
             function fetchBackups(language, table) {
                 $.ajax({
                     type: 'POST',
@@ -202,16 +203,16 @@
                     }
                 });
             }
-
+    
             function reverseTable() {
                 var rows = $('#table-rows').children().toArray();
                 $('#table-rows').empty().append(rows.reverse());
             }
-
+    
             $('#reverse-button').click(function() {
                 reverseTable();
             });
-
+    
             $('#language').change(function() {
                 var language = $(this).val();
                 $.ajax({
@@ -227,61 +228,58 @@
                     }
                 });
             });
-
+    
             $('#table').change(function() {
                 var language = $('#language').val();
-                var table = $(this).val();
-                if (language && table) {
+                selectedTable = $(this).val(); // Update the global variable with the selected table name
+                if (language && selectedTable) {
                     $('#insert-section').removeClass('hidden');
                     $('#toggle-insert-section').text('Hide Insert Section');
                     $('#table-section').removeClass('hidden');
                     $('#toggle-table-section').text('Hide Table Section');
-                    fetchTableContent(language, table);
-                    fetchBackups(language, table);
+                    fetchTableContent(language, selectedTable);
+                    fetchBackups(language, selectedTable);
                 } else {
                     $('#insert-section').addClass('hidden');
                     $('#table-section').addClass('hidden');
                 }
             });
-
+    
             $('#backup').change(function() {
                 var language = $('#language').val();
-                var table = $('#table').val();
                 var backup = $(this).val();
                 if (backup === "") {
-                    fetchTableContent(language, table);
-                } else if (language && table && backup) {
-                    fetchBackupContent(language, table, backup);
+                    fetchTableContent(language, selectedTable);
+                } else if (language && selectedTable && backup) {
+                    fetchBackupContent(language, selectedTable, backup);
                 }
             });
-
+    
             $('#restore-button').click(function() {
                 var language = $('#language').val();
-                var table = $('#table').val();
                 var backup = $('#backup').val();
-                if (language && table && backup) {
+                if (language && selectedTable && backup) {
                     $.ajax({
                         type: 'POST',
                         url: '/restore_backup',
                         contentType: 'application/json',
-                        data: JSON.stringify({ language: language, table: table, backup: backup }),
+                        data: JSON.stringify({ language: language, table: selectedTable, backup: backup }),
                         success: function(response) {
                             if (response.success) {
-                                fetchTableContent(language, table);
+                                fetchTableContent(language, selectedTable);
                             }
                         }
                     });
                 }
             });
-
+    
             $('#show-current-button').click(function() {
                 var language = $('#language').val();
-                var table = $('#table').val();
-                if (language && table) {
-                    fetchTableContent(language, table);
+                if (language && selectedTable) {
+                    fetchTableContent(language, selectedTable);
                 }
             });
-
+    
             $(document).on('blur', 'td[contenteditable="true"]', function() {
                 var cellId = $(this).attr('id');
                 var new_value = $(this).text();
@@ -291,53 +289,50 @@
                     var column = $(this).data('column');
                     var row_id = $(this).data('row-id');
                     var language = $('#language').val();
-                    var table = $('#table').val();
                     $.ajax({
                         type: 'POST',
                         url: '/update_cell',
                         contentType: 'application/json',
-                        data: JSON.stringify({ language: language, table: table, column: column, row_id: row_id, new_value: new_value }),
+                        data: JSON.stringify({ language: language, table: selectedTable, column: column, row_id: row_id, new_value: new_value }),
                         success: function(response) {
                             if (response.success) {
                                 originalValues[cellId] = new_value;
-                                fetchBackups(language, table);
+                                fetchBackups(language, selectedTable);
                             }
                         }
                     });
                 }
             });
-
+    
             $(document).on('click', '.delete-row', function() {
                 var row_id = $(this).data('row-id');
                 var language = $('#language').val();
-                var table = $('#table').val();
                 $.ajax({
                     type: 'POST',
                     url: '/delete_row',
                     contentType: 'application/json',
-                    data: JSON.stringify({ language: language, table: table, row_id: row_id }),
+                    data: JSON.stringify({ language: language, table: selectedTable, row_id: row_id }),
                     success: function(response) {
                         if (response.success) {
                             $('#table').trigger('change');
-                            fetchBackups(language, table);
+                            fetchBackups(language, selectedTable);
                         }
                     }
                 });
             });
-
+    
             $('#insert-form').submit(function(event) {
                 event.preventDefault();
                 var question = $('#question').val();
                 var answer = $('#answer').val();
                 var data_type = $('#data_type').val();
                 var language = $('#language').val();
-                var table = $('#table').val();
-                if (language && table && question && answer) {
+                if (language && selectedTable && question && answer) {
                     $.ajax({
                         type: 'POST',
                         url: '/get_last_row_id',
                         contentType: 'application/json',
-                        data: JSON.stringify({ language: language, table: table }),
+                        data: JSON.stringify({ language: language, table: selectedTable }),
                         success: function(response) {
                             var question_id = response.last_row_id + 1;
                             var new_data = [{ question: question, answer: answer, question_id: question_id, data_type: data_type }];
@@ -345,11 +340,11 @@
                                 type: 'POST',
                                 url: '/insert_data',
                                 contentType: 'application/json',
-                                data: JSON.stringify({ language: language, table: table, data: new_data }),
+                                data: JSON.stringify({ language: language, table: selectedTable, data: new_data }),
                                 success: function(response) {
                                     if (response.success) {
-                                        fetchTableContent(language, table);
-                                        fetchBackups(language, table);
+                                        fetchTableContent(language, selectedTable);
+                                        fetchBackups(language, selectedTable);
                                     }
                                 }
                             });
@@ -357,15 +352,14 @@
                     });
                 }
             });
-
+    
             $('#toggle-json-section').click(function() {
                 $('#json-section').toggle();
             });
-
+    
             $('#insert-json-button').click(function() {
                 var jsonInput = $('#json-input').val();
                 var language = $('#language').val();
-                var table = $('#table').val();
                 try {
                     var jsonData = JSON.parse(jsonInput);
                     if (Array.isArray(jsonData) && jsonData.length > 0) {
@@ -373,11 +367,11 @@
                             type: 'POST',
                             url: '/insert_json',
                             contentType: 'application/json',
-                            data: JSON.stringify({ language: language, table: table, data: jsonData }),
+                            data: JSON.stringify({ language: language, table: selectedTable, data: jsonData }),
                             success: function(response) {
                                 if (response.success) {
-                                    fetchTableContent(language, table);
-                                    fetchBackups(language, table);
+                                    fetchTableContent(language, selectedTable);
+                                    fetchBackups(language, selectedTable);
                                 }
                             }
                         });
@@ -388,7 +382,7 @@
                     alert('Invalid JSON format');
                 }
             });
-
+    
             $('#toggle-insert-section').click(function() {
                 var buttonText = $(this).text();
                 if (buttonText === 'Hide Insert Section') {
@@ -399,7 +393,7 @@
                     $(this).text('Hide Insert Section');
                 }
             });
-
+    
             $('#toggle-table-section').click(function() {
                 var buttonText = $(this).text();
                 if (buttonText === 'Hide Table Section') {
@@ -410,7 +404,7 @@
                     $(this).text('Hide Table Section');
                 }
             });
-
+    
             $('#language').trigger('change');
         });
     </script>
