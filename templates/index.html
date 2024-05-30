@@ -540,8 +540,8 @@
             });
 
             document.getElementById('search-input').addEventListener('input', function() {
-            var query = this.value;
-            if (currentLanguage && currentTable) {
+                var query = this.value;
+                if (currentLanguage && currentTable) {
                 fetch('/search', {
                     method: 'POST',
                     headers: {
@@ -558,7 +558,6 @@
                 .catch(error => console.error('Error:', error));
             }
             });
-
 
             document.getElementById('language').dispatchEvent(new Event('change'));
         });

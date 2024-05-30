@@ -258,16 +258,28 @@ def search_route():
     
     # Construct the search query dynamically
     search_conditions = " OR ".join([f"{column} LIKE ?" for column in columns])
-    search_query = f"SELECT * FROM {table_type} WHERE {search_conditions}"
+    exact_search_query = f"SELECT * FROM {table_type} WHERE {search_conditions}"
     
-    # Execute the search query
+    # Execute the search query for exact match
     search_params = [f'%{query}%'] * len(columns)
-    cursor.execute(search_query, search_params)
+    cursor.execute(exact_search_query, search_params)
     content = cursor.fetchall()
+    
+    if not content:
+        # Split query into words for individual word search
+        words = query.split()
+        search_conditions = " OR ".join([f"{column} LIKE ?" for column in columns])
+        word_search_query = f"SELECT * FROM {table_type} WHERE " + " OR ".join([f"({search_conditions})" for _ in words])
+        search_params = [f'%{word}%' for word in words for _ in columns]
+        
+        cursor.execute(word_search_query, search_params)
+        content = cursor.fetchall()
+    
     columns = [description[0] for description in cursor.description]
     conn.close()
     
     return jsonify(success=True, results={'columns': columns, 'content': content})
+
 
 
 if __name__ == '__main__':
