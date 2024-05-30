@@ -540,24 +540,25 @@
             });
 
             document.getElementById('search-input').addEventListener('input', function() {
-                var query = this.value;
-                if (currentLanguage && currentTable) {
-                    fetch('/search', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ query: query, table_type: currentTable }),
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            displayTableContent(data.results.columns, data.results.content);
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
-                }
+            var query = this.value;
+            if (currentLanguage && currentTable) {
+                fetch('/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query, table_type: currentTable }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayTableContent(data.results.columns, data.results.content);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
             });
+
 
             document.getElementById('language').dispatchEvent(new Event('change'));
         });
