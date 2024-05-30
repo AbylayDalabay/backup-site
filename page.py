@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify
 import sqlite3
 import datetime
 import json
-
+import requests
 app = Flask(__name__)
 
 # Function to get table names from a database
@@ -247,40 +247,27 @@ def search_route():
     if not query:
         return jsonify(success=False, results=[])
     
-    database = 'cards_faq_kz.db' if 'kz' in table_type else 'cards_faq_ru.db'
-    conn = sqlite3.connect(database)
-    cursor = conn.cursor()
+    url = 'http://10.15.132.126:6789/post'
+    search_data = {
+        "query": query,
+        "table_type": table_type
+    }
     
-    # Fetch the column names for the table
-    cursor.execute(f"PRAGMA table_info({table_type})")
-    columns_info = cursor.fetchall()
-    columns = [column[1] for column in columns_info]
-    
-    # Construct the search query dynamically
-    search_conditions = " OR ".join([f"{column} LIKE ?" for column in columns])
-    exact_search_query = f"SELECT * FROM {table_type} WHERE {search_conditions}"
-    
-    # Execute the search query for exact match
-    search_params = [f'%{query}%'] * len(columns)
-    cursor.execute(exact_search_query, search_params)
-    content = cursor.fetchall()
-    
-    if not content:
-        # Split query into words for individual word search
-        words = query.split()
-        search_conditions = " OR ".join([f"{column} LIKE ?" for column in columns])
-        word_search_query = f"SELECT * FROM {table_type} WHERE " + " OR ".join([f"({search_conditions})" for _ in words])
-        search_params = [f'%{word}%' for word in words for _ in columns]
-        
-        cursor.execute(word_search_query, search_params)
-        content = cursor.fetchall()
-    
-    columns = [description[0] for description in cursor.description]
-    conn.close()
-    
-    return jsonify(success=True, results={'columns': columns, 'content': content})
+    try:
+        response = requests.post(url, json=search_data)
+        response.raise_for_status()  # Check if the request was successful
+        search_results = response.json()  # Parse the JSON response
 
-
+        if search_results:
+            return jsonify(success=True, results=search_results)
+        else:
+            return jsonify(success=False, results=[])
+    except requests.exceptions.RequestException as e:
+        print(f"Request failed: {e}")
+        return jsonify(success=False, results=[])
+    except ValueError:
+        print("Response was not valid JSON")
+        return jsonify(success=False, results=[])
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=7691)
