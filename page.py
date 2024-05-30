@@ -3,6 +3,7 @@ import sqlite3
 import datetime
 import json
 import requests
+
 app = Flask(__name__)
 
 # Function to get table names from a database
@@ -92,6 +93,7 @@ def insert_data_into_table(database, table_name, data):
     check_query = f'SELECT EXISTS(SELECT 1 FROM {table_name} WHERE question = ? LIMIT 1)'
     insert_query = f'INSERT INTO {table_name} (question, answer, question_id, data_type) VALUES (?, ?, ?, ?)'
 
+    duplicate_found = False
     for entry in data:
         question = entry.get('question')
         answer = entry.get('answer')
@@ -104,10 +106,13 @@ def insert_data_into_table(database, table_name, data):
         if not exists:
             cursor.execute(insert_query, (question, answer, question_id, data_type))
         else:
+            duplicate_found = True
             print(f"Question already exists: {question}")
 
     conn.commit()
     conn.close()
+
+    return duplicate_found
 
 # Function to get last row id
 def get_last_row_id(database, table_name):
@@ -199,8 +204,8 @@ def insert_data_route():
     new_data = data.get('data')
     database = 'cards_faq_kz.db' if language == 'kazakh' else 'cards_faq_ru.db'
     create_backup(language, table)  # Create backup before inserting
-    insert_data_into_table(database, table, new_data)
-    return jsonify(success=True)
+    duplicate_found = insert_data_into_table(database, table, new_data)
+    return jsonify(success=True, duplicate=duplicate_found)
 
 @app.route('/get_last_row_id', methods=['POST'])
 def get_last_row_id_route():
@@ -221,6 +226,7 @@ def insert_json_route():
     create_backup(language, table)  # Create backup before inserting
 
     valid_entries = []
+    duplicate_found = False
     for entry in json_data:
         if 'question_ru' in entry and 'answer_ru' in entry:
             valid_entries.append({
@@ -235,8 +241,10 @@ def insert_json_route():
                 'data_type': entry.get('type', 'manual')
             })
 
-    insert_data_into_table(database, table, valid_entries)
-    return jsonify(success=True)
+    if valid_entries:
+        duplicate_found = insert_data_into_table(database, table, valid_entries)
+    
+    return jsonify(success=True, duplicate=duplicate_found)
 
 @app.route('/search', methods=['POST'])
 def search_route():

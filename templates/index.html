@@ -128,6 +128,27 @@
             content: " \25BC";
             font-size: 12px;
         }
+        /* Notification styles */
+        #notification {
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 5px;
+            font-family: 'Proxima Nova', sans-serif;
+            font-weight: 600;
+            text-align: center;
+        }
+        #notification.success {
+            background-color: #00A651;
+            color: #fff;
+        }
+        #notification.error {
+            background-color: #ff4c4c;
+            color: #fff;
+        }
+        #notification.duplicate {
+            background-color: #FFA500; /* Orange color for duplicate entries */
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -148,6 +169,7 @@
         </select>
         <button id="restore-button">Restore</button>
         <button id="show-current-button">Show Current Data</button>
+        <div id="notification" class="hidden"></div> <!-- Notification area -->
     </div>
     <div class="main-content">
         <section id="insert-section" class="hidden">
@@ -278,6 +300,14 @@
                 $('#table-rows').empty().append(rows.reverse());
             }
 
+            function showNotification(message, type) {
+                var notification = $('#notification');
+                notification.removeClass('hidden').removeClass('success error duplicate').addClass(type).text(message);
+                setTimeout(function() {
+                    notification.addClass('hidden');
+                }, 3000); // Hide after 3 seconds
+            }
+
             $('#reverse-button').click(function() {
                 reverseTable();
             });
@@ -341,6 +371,9 @@
                         success: function(response) {
                             if (response.success) {
                                 fetchTableContent(language, table);
+                                showNotification('Restore successful', 'success');
+                            } else {
+                                showNotification('Restore failed', 'error');
                             }
                         }
                     });
@@ -374,6 +407,9 @@
                             if (response.success) {
                                 originalValues[cellId] = new_value;
                                 fetchBackups(language, table);
+                                showNotification('Update successful', 'success');
+                            } else {
+                                showNotification('Update failed', 'error');
                             }
                         }
                     });
@@ -393,6 +429,9 @@
                         if (response.success) {
                             $('#table').trigger('change');
                             fetchBackups(language, table);
+                            showNotification('Delete successful', 'success');
+                        } else {
+                            showNotification('Delete failed', 'error');
                         }
                     }
                 });
@@ -423,6 +462,13 @@
                                     if (response.success) {
                                         fetchTableContent(language, table);
                                         fetchBackups(language, table);
+                                        if (response.duplicate) {
+                                            showNotification('Question already exists', 'duplicate');
+                                        } else {
+                                            showNotification('Insert successful', 'success');
+                                        }
+                                    } else {
+                                        showNotification('Insert failed', 'error');
                                     }
                                 }
                             });
@@ -451,6 +497,13 @@
                                 if (response.success) {
                                     fetchTableContent(language, table);
                                     fetchBackups(language, table);
+                                    if (response.duplicate) {
+                                        showNotification('Insert JSON successful, but some questions already exist', 'duplicate');
+                                    } else {
+                                        showNotification('Insert JSON successful', 'success');
+                                    }
+                                } else {
+                                    showNotification('Insert JSON failed', 'error');
                                 }
                             }
                         });
@@ -543,3 +596,4 @@
     </script>
 </body>
 </html>
+
