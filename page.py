@@ -19,7 +19,7 @@ def get_table_names(database):
 def get_table_content(database, table):
     conn = sqlite3.connect(database)
     cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM {table};")
+    cursor.execute(f"SELECT rowid, * FROM {table};")  # Include rowid in the selection
     content = cursor.fetchall()
     columns = [description[0] for description in cursor.description]
     conn.close()
@@ -38,8 +38,10 @@ def delete_row(database, table, row_id):
     conn = sqlite3.connect(database)
     cursor = conn.cursor()
     cursor.execute(f"DELETE FROM {table} WHERE rowid = ?", (row_id,))
+    deleted = cursor.rowcount  # Check if a row was actually deleted
     conn.commit()
     conn.close()
+    return deleted > 0
 
 # Function to create a backup
 def create_backup(language, table):
@@ -165,8 +167,8 @@ def delete_row_route():
     row_id = data.get('row_id')
     database = 'cards_faq_kz.db' if language == 'kazakh' else 'cards_faq_ru.db'
     create_backup(language, table)  # Create backup before deleting
-    delete_row(database, table, row_id)
-    return jsonify(success=True)
+    success = delete_row(database, table, row_id)
+    return jsonify(success=success)
 
 @app.route('/get_backups', methods=['POST'])
 def get_backups_route():

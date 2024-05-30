@@ -268,10 +268,10 @@
                     var rowHtml = '<tr>';
                     $.each(row, function(i, cell) {
                         var cellId = 'row-' + index + '-col-' + i;
-                        rowHtml += '<td id="' + cellId + '" contenteditable="true" data-column="' + headers[i] + '" data-row-id="' + (index + 1) + '">' + cell + '</td>';
+                        rowHtml += '<td id="' + cellId + '" contenteditable="true" data-column="' + headers[i] + '" data-row-id="' + row[0] + '">' + cell + '</td>';
                         originalValues[cellId] = cell;
                     });
-                    rowHtml += '<td><button class="delete-row" data-row-id="' + (index + 1) + '">Delete</button></td>';
+                    rowHtml += '<td><button class="delete-row" data-row-id="' + row[0] + '">Delete</button></td>';
                     rowHtml += '</tr>';
                     $('#table-rows').append(rowHtml);
                 });
@@ -427,7 +427,7 @@
                     data: JSON.stringify({ language: language, table: table, row_id: row_id }),
                     success: function(response) {
                         if (response.success) {
-                            $('#table').trigger('change');
+                            fetchTableContent(language, table);
                             fetchBackups(language, table);
                             showNotification('Delete successful', 'success');
                         } else {
@@ -463,7 +463,7 @@
                                         fetchTableContent(language, table);
                                         fetchBackups(language, table);
                                         if (response.duplicate) {
-                                            showNotification('Question already exists', 'duplicate');
+                                            showNotification('Insert successful, but question already exists', 'duplicate');
                                         } else {
                                             showNotification('Insert successful', 'success');
                                         }
@@ -596,4 +596,3 @@
     </script>
 </body>
 </html>
-
