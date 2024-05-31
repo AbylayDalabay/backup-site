@@ -3,6 +3,8 @@ import sqlite3
 import datetime
 import json
 import requests
+import random
+import string
 
 app = Flask(__name__)
 
@@ -19,7 +21,7 @@ def get_table_names(database):
 def get_table_content(database, table):
     conn = sqlite3.connect(database)
     cursor = conn.cursor()
-    cursor.execute(f"SELECT rowid, * FROM {table};")  # Include rowid in the selection
+    cursor.execute(f"SELECT * FROM {table};")
     content = cursor.fetchall()
     columns = [description[0] for description in cursor.description]
     conn.close()
@@ -29,7 +31,7 @@ def get_table_content(database, table):
 def update_cell(database, table, column, row_id, new_value):
     conn = sqlite3.connect(database)
     cursor = conn.cursor()
-    cursor.execute(f"UPDATE {table} SET {column} = ? WHERE rowid = ?", (new_value, row_id))
+    cursor.execute(f"UPDATE {table} SET {column} = ? WHERE id = ?", (new_value, row_id))
     conn.commit()
     conn.close()
 
@@ -37,7 +39,7 @@ def update_cell(database, table, column, row_id, new_value):
 def delete_row(database, table, row_id):
     conn = sqlite3.connect(database)
     cursor = conn.cursor()
-    cursor.execute(f"DELETE FROM {table} WHERE rowid = ?", (row_id,))
+    cursor.execute(f"DELETE FROM {table} WHERE id = ?", (row_id,))
     deleted = cursor.rowcount  # Check if a row was actually deleted
     conn.commit()
     conn.close()
@@ -88,25 +90,35 @@ def restore_backup(language, table, backup):
     conn.commit()
     conn.close()
 
+# Function to generate a unique question_id
+def generate_message_id(k_len=20):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=k_len))
+
 # Function to insert data into table
 def insert_data_into_table(database, table_name, data):
     conn = sqlite3.connect(database)
     cursor = conn.cursor()
     check_query = f'SELECT EXISTS(SELECT 1 FROM {table_name} WHERE question = ? LIMIT 1)'
-    insert_query = f'INSERT INTO {table_name} (question, answer, question_id, data_type) VALUES (?, ?, ?, ?)'
+    insert_query = f'INSERT INTO {table_name} (id, question, answer, question_id, data_type) VALUES (?, ?, ?, ?, ?)'
 
     duplicate_found = False
+
+    # Get the last id
+    cursor.execute(f'SELECT MAX(id) FROM {table_name}')
+    last_id = cursor.fetchone()[0] or 0  # If there are no rows, set last_id to 0
+
     for entry in data:
         question = entry.get('question')
         answer = entry.get('answer')
-        question_id = entry.get('question_id', '111')
+        question_id = generate_message_id()  # Generate unique question_id
         data_type = entry.get('data_type', 'manual')
 
         cursor.execute(check_query, (question,))
         exists = cursor.fetchone()[0]
 
         if not exists:
-            cursor.execute(insert_query, (question, answer, question_id, data_type))
+            cursor.execute(insert_query, (last_id + 1, question, answer, question_id, data_type))
+            last_id += 1  # Increment last_id for the next row
         else:
             duplicate_found = True
             print(f"Question already exists: {question}")
@@ -120,7 +132,7 @@ def insert_data_into_table(database, table_name, data):
 def get_last_row_id(database, table_name):
     conn = sqlite3.connect(database)
     cursor = conn.cursor()
-    cursor.execute(f'SELECT MAX(rowid) FROM {table_name}')
+    cursor.execute(f'SELECT MAX(id) FROM {table_name}')
     last_row_id = cursor.fetchone()[0]
     conn.close()
     return last_row_id
