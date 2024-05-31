@@ -207,7 +207,6 @@
         <section id="table-section">
             <button class="toggle-button" id="toggle-table-section">Скрыть Раздел Таблицы</button>
             <div class="section-content">
-                <button id="reverse-button" class="toggle-button">Обратить Порядок</button>
                 <table id="table-content" class="display" style="width:100%">
                     <thead>
                         <tr id="table-headers"></tr>
@@ -289,11 +288,6 @@
                 });
             }
 
-            function reverseTable() {
-                var rows = $('#table-rows').children().toArray();
-                $('#table-rows').empty().append(rows.reverse());
-            }
-
             function showNotification(message, type) {
                 var notification = $('#notification');
                 notification.removeClass('hidden').removeClass('success error duplicate').addClass(type).text(message);
@@ -301,10 +295,6 @@
                     notification.addClass('hidden');
                 }, 3000);
             }
-
-            $('#reverse-button').click(function() {
-                reverseTable();
-            });
 
             $('#language').change(function() {
                 var language = $(this).val();
