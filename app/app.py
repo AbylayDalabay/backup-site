@@ -2,25 +2,30 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 from db_utils import (
     get_table_names, get_table_content, update_cell, delete_row, 
     create_backup, get_backups, get_backup_content, restore_backup, 
-    insert_data_into_table, get_last_row_id
+    insert_data_into_table, get_last_row_id,add_columns_to_tables
 )
 from users import create_table, add_user, get_user_by_id, get_all_users, update_user, delete_user, get_user_by_login
 from config import DATABASES, BACKUP_DATABASES
 import requests
+import datetime
+
+# for language, db_path in BACKUP_DATABASES.items():
+#     if language!='users':
+#         add_columns_to_tables(db_path)
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
-create_table()
+#create_table()
 app.secret_key = 'your_secret_key12'
 
-add_user('abylai', 'admin')
+#add_user('abylai', 'admin')
 
 # Routes
 @app.route('/')
 def index():
     if 'logged_in' not in session:
         return redirect(url_for('login'))
-    return render_template('index.html', role=session['role'])
+    return render_template('index.html', role=session['role'], login=session['login'])
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -32,6 +37,7 @@ def login():
             session['logged_in'] = True
             session['user_id'] = user['id']
             session['role'] = user['role']
+            session['login'] = user['login']
             if user['role'] == 'admin':
                 return redirect(url_for('admin'))
             else:
@@ -51,7 +57,13 @@ def admin():
     if session['role'] != 'admin':
         return redirect(url_for('index'))
     users = get_all_users()
-    return render_template('admin.html', users=users)
+    return render_template('admin.html', users=users, role=session['role'], login=session['login'])
+
+@app.route('/profile')
+def profile():
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
+    return render_template('profile.html', login=session['login'], role=session['role'])
 
 @app.route('/add_user', methods=['POST'])
 def add_user_route():

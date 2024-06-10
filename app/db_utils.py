@@ -2,8 +2,11 @@ import sqlite3
 import datetime
 import random
 import string
-
+from flask import session
 from config import DATABASES, BACKUP_DATABASES
+
+
+
 
 # Utility Functions
 def connect_db(database):
@@ -19,6 +22,19 @@ def fetch_all(cursor):
 
 def close_db(conn):
     conn.close()
+
+
+def add_columns_to_tables(database):
+    conn = connect_db(database)
+    cursor = conn.cursor()
+    
+    tables = get_table_names(database)
+    for table in tables:
+        cursor.execute(f"ALTER TABLE {table} ADD COLUMN user TEXT DEFAULT 'admin'")
+        cursor.execute(f"ALTER TABLE {table} ADD COLUMN date TEXT DEFAULT '{datetime.datetime.now().strftime('%Y-%m-%d')}'")
+    
+    conn.commit()
+    close_db(conn)
 
 # Database Functions
 def get_table_names(database):
@@ -50,16 +66,24 @@ def delete_row(database, table, row_id):
     close_db(conn)
     return deleted > 0
 
+# Example for create_backup function
 def create_backup(language, table):
     source_db = DATABASES[language]
     backup_db = BACKUP_DATABASES[language]
-    backup_table = f"{table}_backup_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+    timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+    username = session.get('login', 'unknown')
+    backup_table = f"{table}_{username}_{timestamp}"
     
-    conn = connect_db(backup_db)
-    execute_query(conn, f"ATTACH DATABASE '{source_db}' AS source_db")
-    execute_query(conn, f"CREATE TABLE {backup_table} AS SELECT * FROM source_db.{table}")
+    conn = connect_db(source_db)
+    cursor = execute_query(conn, f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{table}';")
+    create_table_sql = fetch_all(cursor)[0][0]
+    
+    execute_query(conn, f"ATTACH DATABASE '{backup_db}' AS backup_db")
+    execute_query(conn, f"CREATE TABLE backup_db.{backup_table} AS SELECT * FROM main.{table}")
+    
     conn.commit()
     close_db(conn)
+
 
 def get_backups(database, table):
     conn = connect_db(database)
@@ -94,7 +118,7 @@ def insert_data_into_table(database, table_name, data):
     conn = connect_db(database)
     cursor = conn.cursor()
     check_query = f'SELECT EXISTS(SELECT 1 FROM {table_name} WHERE question = ? LIMIT 1)'
-    insert_query = f'INSERT INTO {table_name} (id, question, answer, question_id, data_type) VALUES (?, ?, ?, ?, ?)'
+    insert_query = f'INSERT INTO {table_name} (id, question, answer, question_id, data_type, user, date) VALUES (?, ?, ?, ?, ?, ?, ?)'
 
     duplicate_found = False
 
@@ -106,12 +130,14 @@ def insert_data_into_table(database, table_name, data):
         answer = entry.get('answer')
         question_id = generate_message_id()
         data_type = entry.get('data_type', 'manual')
+        user = session.get('login', 'unknown')
+        date = datetime.datetime.now().strftime('%Y-%m-%d')
 
         cursor.execute(check_query, (question,))
         exists = cursor.fetchone()[0]
 
         if not exists:
-            cursor.execute(insert_query, (last_id + 1, question, answer, question_id, data_type))
+            cursor.execute(insert_query, (last_id + 1, question, answer, question_id, data_type, user, date))
             last_id += 1
         else:
             duplicate_found = True
@@ -122,9 +148,15 @@ def insert_data_into_table(database, table_name, data):
 
     return duplicate_found
 
+
 def get_last_row_id(database, table_name):
     conn = connect_db(database)
     cursor = execute_query(conn, f'SELECT MAX(id) FROM {table_name}')
     last_row_id = cursor.fetchone()[0]
     close_db(conn)
     return last_row_id
+
+
+
+
+    

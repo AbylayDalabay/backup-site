@@ -8,8 +8,48 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <style>
+        .profile-section {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .profile-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #333;
+            margin-right: 10px;
+        }
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        .logout-button {
+            background: none;
+            border: none;
+            color: blue;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
+    <div class="profile-section">
+        <div class="profile-circle">{{ login[0].upper() }}</div>
+        <div class="profile-info">
+            <span>{{ login }}</span>
+            <button class="logout-button" onclick="location.href='{{ url_for('logout') }}'">Logout</button>
+        </div>
+    </div>
     <div class="sidebar">
         <img src="{{ url_for('static', filename='assets/logotype.svg') }}" alt="BCC Bank Logo">
         <label for="language">Выбрать Язык:</label>
@@ -25,13 +65,16 @@
         <select id="backup" name="backup">
             <option value="">--Не Выбрано--</option>
         </select>
-        <button id="restore-button" {% if role == 'viewer' %}style="display:none;"{% endif %}>Восстановить</button>
+        {% if role != 'viewer' %}
+            <button id="restore-button">Восстановить</button>
+        {% endif %}
         <button id="show-current-button">Показать Текущие Данные</button>
         <div id="notification" class="hidden"></div>
     </div>
     <div class="main-content">
+        {% if role != 'viewer' %}
         <section id="insert-section" class="hidden">
-            <button class="toggle-button" id="toggle-insert-section" {% if role == 'viewer' %}style="display:none;"{% endif %}>Показать Раздел Вставки</button>
+            <button class="toggle-button" id="toggle-insert-section">Показать Раздел Вставки</button>
             <div class="section-content">
                 <form id="insert-form">
                     <label for="question">Вопрос:</label>
@@ -42,13 +85,14 @@
                     <input type="text" id="data_type" name="data_type" value="manual"><br>
                     <button type="submit" class="submit-json-button">Отправить</button>
                 </form>
-                <button id="toggle-json-section" class="toggle-button arrow-down" {% if role == 'viewer' %}style="display:none;"{% endif %}>Вставить JSON</button>
+                <button id="toggle-json-section" class="toggle-button arrow-down">Вставить JSON</button>
                 <div id="json-section" class="hidden">
                     <textarea id="json-input" rows="10" cols="50" placeholder="Вставьте JSON данные здесь"></textarea>
                     <button id="insert-json-button" class="submit-json-button">Отправить JSON</button>
                 </div>
             </div>
         </section>
+        {% endif %}
 
         <section id="search-section" class="hidden">
             <button class="toggle-button" id="toggle-search-section">Показать Раздел Поиска</button>
