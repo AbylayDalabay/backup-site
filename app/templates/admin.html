@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
+    <div class="notification" id="notification"></div>
     <h2>Admin Page</h2>
     <button onclick="logout()">Logout</button>
     <h3>Users</h3>
@@ -55,33 +57,31 @@
     </form>
 
     <script>
-        document.getElementById('add-user-form').onsubmit = async function(event) {
+        async function handleFormSubmit(event, formId, url) {
             event.preventDefault();
-            const login = document.getElementById('new-login').value;
-            const role = document.getElementById('new-role').value;
-            const response = await fetch('/add_user', {
+            const form = document.getElementById(formId);
+            const formData = new FormData(form);
+            const data = {};
+            formData.forEach((value, key) => data[key] = value);
+
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ login, role })
+                body: JSON.stringify(data)
             });
-            if (response.ok) {
+            const result = await response.json();
+            displayNotification(result.message, result.success ? 'success' : 'error');
+            if (result.success) {
                 location.reload();
             }
+        }
+
+        document.getElementById('add-user-form').onsubmit = function(event) {
+            handleFormSubmit(event, 'add-user-form', '/add_user');
         };
 
-        document.getElementById('edit-user-form').onsubmit = async function(event) {
-            event.preventDefault();
-            const id = document.getElementById('edit-id').value;
-            const login = document.getElementById('edit-login').value;
-            const role = document.getElementById('edit-role').value;
-            const response = await fetch('/update_user', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, login, role })
-            });
-            if (response.ok) {
-                location.reload();
-            }
+        document.getElementById('edit-user-form').onsubmit = function(event) {
+            handleFormSubmit(event, 'edit-user-form', '/update_user');
         };
 
         function editUser(id, login, role) {
@@ -97,9 +97,21 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id })
             });
-            if (response.ok) {
+            const result = await response.json();
+            displayNotification(result.message, result.success ? 'success' : 'error');
+            if (result.success) {
                 location.reload();
             }
+        }
+
+        function displayNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = type;
+            setTimeout(() => {
+                notification.textContent = '';
+                notification.className = '';
+            }, 5000);
         }
 
         function logout() {

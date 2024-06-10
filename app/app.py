@@ -2,25 +2,16 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 from db_utils import (
     get_table_names, get_table_content, update_cell, delete_row, 
     create_backup, get_backups, get_backup_content, restore_backup, 
-    insert_data_into_table, get_last_row_id,add_columns_to_tables
+    insert_data_into_table, get_last_row_id, add_columns_to_tables
 )
 from users import create_table, add_user, get_user_by_id, get_all_users, update_user, delete_user, get_user_by_login
 from config import DATABASES, BACKUP_DATABASES
 import requests
 import datetime
 
-# for language, db_path in BACKUP_DATABASES.items():
-#     if language!='users':
-#         add_columns_to_tables(db_path)
-
 app = Flask(__name__, static_folder='static', template_folder='templates')
-
-#create_table()
 app.secret_key = 'your_secret_key12'
 
-#add_user('abylai', 'admin')
-
-# Routes
 @app.route('/')
 def index():
     if 'logged_in' not in session:
@@ -33,7 +24,9 @@ def login():
         login = request.form['login']
         password = request.form['password']
         user = get_user_by_login(login)
-        if user and user['password'] == password:
+
+        if user and user['password'].strip() == password.strip():
+            print("LOGGED")
             session['logged_in'] = True
             session['user_id'] = user['id']
             session['role'] = user['role']
@@ -42,7 +35,7 @@ def login():
                 return redirect(url_for('admin'))
             else:
                 return redirect(url_for('index'))
-        return 'Invalid credentials'
+        return render_template('login.html', error='Invalid credentials')
     return render_template('login.html')
 
 @app.route('/logout')
@@ -72,8 +65,11 @@ def add_user_route():
     data = request.get_json()
     login = data['login']
     role = data['role']
-    add_user(login, role)
-    return jsonify(success=True)
+    try:
+        add_user(login, role)
+        return jsonify(success=True, message="User added successfully")
+    except Exception as e:
+        return jsonify(success=False, message=str(e))
 
 @app.route('/update_user', methods=['POST'])
 def update_user_route():
@@ -83,8 +79,11 @@ def update_user_route():
     user_id = data['id']
     login = data.get('login')
     role = data.get('role')
-    update_user(user_id, login, role)
-    return jsonify(success=True)
+    try:
+        update_user(user_id, login, role)
+        return jsonify(success=True, message="User updated successfully")
+    except Exception as e:
+        return jsonify(success=False, message=str(e))
 
 @app.route('/delete_user', methods=['POST'])
 def delete_user_route():
@@ -92,13 +91,16 @@ def delete_user_route():
         return jsonify(success=False, message="Unauthorized"), 403
     data = request.get_json()
     user_id = data['id']
-    delete_user(user_id)
-    return jsonify(success=True)
+    try:
+        delete_user(user_id)
+        return jsonify(success=True, message="User deleted successfully")
+    except Exception as e:
+        return jsonify(success=False, message=str(e))
 
 @app.route('/get_tables', methods=['POST'])
 def get_tables():
     if 'logged_in' not in session:
-        return redirect(url_for('login'))
+        return jsonify(success=False, message="Unauthorized"), 403
     data = request.get_json()
     language = data.get('language')
     database = DATABASES[language]
@@ -108,7 +110,7 @@ def get_tables():
 @app.route('/get_table_content', methods=['POST'])
 def get_table_content_route():
     if 'logged_in' not in session:
-        return redirect(url_for('login'))
+        return jsonify(success=False, message="Unauthorized"), 403
     data = request.get_json()
     language = data.get('language')
     table = data.get('table')
@@ -127,9 +129,12 @@ def update_cell_route():
     row_id = data.get('row_id')
     new_value = data.get('new_value')
     database = DATABASES[language]
-    create_backup(language, table)
-    update_cell(database, table, column, row_id, new_value)
-    return jsonify(success=True)
+    try:
+        create_backup(language, table)
+        update_cell(database, table, column, row_id, new_value)
+        return jsonify(success=True, message="Cell updated successfully")
+    except Exception as e:
+        return jsonify(success=False, message=str(e))
 
 @app.route('/delete_row', methods=['POST'])
 def delete_row_route():
@@ -140,14 +145,17 @@ def delete_row_route():
     table = data.get('table')
     row_id = data.get('row_id')
     database = DATABASES[language]
-    create_backup(language, table)
-    success = delete_row(database, table, row_id)
-    return jsonify(success=success)
+    try:
+        create_backup(language, table)
+        success = delete_row(database, table, row_id)
+        return jsonify(success=success, message="Row deleted successfully")
+    except Exception as e:
+        return jsonify(success=False, message=str(e))
 
 @app.route('/get_backups', methods=['POST'])
 def get_backups_route():
     if 'logged_in' not in session:
-        return redirect(url_for('login'))
+        return jsonify(success=False, message="Unauthorized"), 403
     data = request.get_json()
     language = data.get('language')
     table = data.get('table')
@@ -158,7 +166,7 @@ def get_backups_route():
 @app.route('/get_backup_content', methods=['POST'])
 def get_backup_content_route():
     if 'logged_in' not in session:
-        return redirect(url_for('login'))
+        return jsonify(success=False, message="Unauthorized"), 403
     data = request.get_json()
     language = data.get('language')
     table = data.get('table')
@@ -175,8 +183,11 @@ def restore_backup_route():
     language = data.get('language')
     table = data.get('table')
     backup = data.get('backup')
-    restore_backup(language, table, backup)
-    return jsonify(success=True)
+    try:
+        restore_backup(language, table, backup)
+        return jsonify(success=True, message="Backup restored successfully")
+    except Exception as e:
+        return jsonify(success=False, message=str(e))
 
 @app.route('/insert_data', methods=['POST'])
 def insert_data_route():
@@ -187,14 +198,17 @@ def insert_data_route():
     table = data.get('table')
     new_data = data.get('data')
     database = DATABASES[language]
-    create_backup(language, table)
-    duplicate_found = insert_data_into_table(database, table, new_data)
-    return jsonify(success=True, duplicate=duplicate_found)
+    try:
+        create_backup(language, table)
+        duplicate_found = insert_data_into_table(database, table, new_data)
+        return jsonify(success=True, duplicate=duplicate_found, message="Data inserted successfully")
+    except Exception as e:
+        return jsonify(success=False, message=str(e))
 
 @app.route('/get_last_row_id', methods=['POST'])
 def get_last_row_id_route():
     if 'logged_in' not in session:
-        return redirect(url_for('login'))
+        return jsonify(success=False, message="Unauthorized"), 403
     data = request.get_json()
     language = data.get('language')
     table = data.get('table')
@@ -211,61 +225,55 @@ def insert_json_route():
     table = data.get('table')
     json_data = data.get('data')
     database = DATABASES[language]
-    create_backup(language, table)
-
-    valid_entries = []
-    duplicate_found = False
-    for entry in json_data:
-        if 'question_ru' in entry and 'answer_ru' in entry:
-            valid_entries.append({
-                'question': entry['question_ru'],
-                'answer': entry['answer_ru'],
-                'data_type': entry.get('type', 'manual')
-            })
-        elif 'question_kz' in entry and 'answer_kz' in entry:
-            valid_entries.append({
-                'question': entry['question_kz'],
-                'answer': entry['answer_kz'],
-                'data_type': entry.get('type', 'manual')
-            })
-
-    if valid_entries:
-        duplicate_found = insert_data_into_table(database, table, valid_entries)
-    
-    return jsonify(success=True, duplicate=duplicate_found)
+    try:
+        create_backup(language, table)
+        valid_entries = []
+        duplicate_found = False
+        for entry in json_data:
+            if 'question_ru' in entry and 'answer_ru' in entry:
+                valid_entries.append({
+                    'question': entry['question_ru'],
+                    'answer': entry['answer_ru'],
+                    'data_type': entry.get('type', 'manual')
+                })
+            elif 'question_kz' in entry and 'answer_kz' in entry:
+                valid_entries.append({
+                    'question': entry['question_kz'],
+                    'answer': entry['answer_kz'],
+                    'data_type': entry.get('type', 'manual')
+                })
+        if valid_entries:
+            duplicate_found = insert_data_into_table(database, table, valid_entries)
+        return jsonify(success=True, duplicate=duplicate_found, message="JSON data inserted successfully")
+    except Exception as e:
+        return jsonify(success=False, message=str(e))
 
 @app.route('/search', methods=['POST'])
 def search_route():
     if 'logged_in' not in session:
-        return redirect(url_for('login'))
+        return jsonify(success=False, message="Unauthorized"), 403
     data = request.get_json()
     query = data.get('query')
     table_type = data.get('table_type')
-    
     if not query:
-        return jsonify(success=False, results=[])
-    
+        return jsonify(success=False, results=[], message="Empty query")
     url = 'http://10.15.132.126:6789/post'
     search_data = {
         "query": query,
         "table_type": table_type
     }
-    
     try:
         response = requests.post(url, json=search_data)
         response.raise_for_status()
         search_results = response.json()
-
         if search_results:
-            return jsonify(success=True, results=search_results)
+            return jsonify(success=True, results=search_results, message="Search completed successfully")
         else:
-            return jsonify(success=False, results=[])
+            return jsonify(success=False, results=[], message="No results found")
     except requests.exceptions.RequestException as e:
-        print(f"Request failed: {e}")
-        return jsonify(success=False, results=[])
+        return jsonify(success=False, results=[], message=f"Request failed: {e}")
     except ValueError:
-        print("Response was not valid JSON")
-        return jsonify(success=False, results=[])
+        return jsonify(success=False, results=[], message="Response was not valid JSON")
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=7691)
