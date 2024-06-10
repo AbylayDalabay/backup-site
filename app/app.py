@@ -20,7 +20,7 @@ add_user('abylai', 'admin')
 def index():
     if 'logged_in' not in session:
         return redirect(url_for('login'))
-    return render_template('index.html')
+    return render_template('index.html', role=session['role'])
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -48,11 +48,15 @@ def logout():
 def admin():
     if 'logged_in' not in session:
         return redirect(url_for('login'))
+    if session['role'] != 'admin':
+        return redirect(url_for('index'))
     users = get_all_users()
     return render_template('admin.html', users=users)
 
 @app.route('/add_user', methods=['POST'])
 def add_user_route():
+    if 'logged_in' not in session or session['role'] != 'admin':
+        return jsonify(success=False, message="Unauthorized"), 403
     data = request.get_json()
     login = data['login']
     role = data['role']
@@ -61,6 +65,8 @@ def add_user_route():
 
 @app.route('/update_user', methods=['POST'])
 def update_user_route():
+    if 'logged_in' not in session or session['role'] != 'admin':
+        return jsonify(success=False, message="Unauthorized"), 403
     data = request.get_json()
     user_id = data['id']
     login = data.get('login')
@@ -70,15 +76,17 @@ def update_user_route():
 
 @app.route('/delete_user', methods=['POST'])
 def delete_user_route():
+    if 'logged_in' not in session or session['role'] != 'admin':
+        return jsonify(success=False, message="Unauthorized"), 403
     data = request.get_json()
     user_id = data['id']
     delete_user(user_id)
     return jsonify(success=True)
 
-
-
 @app.route('/get_tables', methods=['POST'])
 def get_tables():
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
     data = request.get_json()
     language = data.get('language')
     database = DATABASES[language]
@@ -87,6 +95,8 @@ def get_tables():
 
 @app.route('/get_table_content', methods=['POST'])
 def get_table_content_route():
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
     data = request.get_json()
     language = data.get('language')
     table = data.get('table')
@@ -96,6 +106,8 @@ def get_table_content_route():
 
 @app.route('/update_cell', methods=['POST'])
 def update_cell_route():
+    if 'logged_in' not in session or session['role'] == 'viewer':
+        return jsonify(success=False, message="Unauthorized"), 403
     data = request.get_json()
     language = data.get('language')
     table = data.get('table')
@@ -109,6 +121,8 @@ def update_cell_route():
 
 @app.route('/delete_row', methods=['POST'])
 def delete_row_route():
+    if 'logged_in' not in session or session['role'] == 'viewer':
+        return jsonify(success=False, message="Unauthorized"), 403
     data = request.get_json()
     language = data.get('language')
     table = data.get('table')
@@ -120,6 +134,8 @@ def delete_row_route():
 
 @app.route('/get_backups', methods=['POST'])
 def get_backups_route():
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
     data = request.get_json()
     language = data.get('language')
     table = data.get('table')
@@ -129,6 +145,8 @@ def get_backups_route():
 
 @app.route('/get_backup_content', methods=['POST'])
 def get_backup_content_route():
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
     data = request.get_json()
     language = data.get('language')
     table = data.get('table')
@@ -139,6 +157,8 @@ def get_backup_content_route():
 
 @app.route('/restore_backup', methods=['POST'])
 def restore_backup_route():
+    if 'logged_in' not in session or session['role'] == 'viewer':
+        return jsonify(success=False, message="Unauthorized"), 403
     data = request.get_json()
     language = data.get('language')
     table = data.get('table')
@@ -148,6 +168,8 @@ def restore_backup_route():
 
 @app.route('/insert_data', methods=['POST'])
 def insert_data_route():
+    if 'logged_in' not in session or session['role'] == 'viewer':
+        return jsonify(success=False, message="Unauthorized"), 403
     data = request.get_json()
     language = data.get('language')
     table = data.get('table')
@@ -159,6 +181,8 @@ def insert_data_route():
 
 @app.route('/get_last_row_id', methods=['POST'])
 def get_last_row_id_route():
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
     data = request.get_json()
     language = data.get('language')
     table = data.get('table')
@@ -168,6 +192,8 @@ def get_last_row_id_route():
 
 @app.route('/insert_json', methods=['POST'])
 def insert_json_route():
+    if 'logged_in' not in session or session['role'] == 'viewer':
+        return jsonify(success=False, message="Unauthorized"), 403
     data = request.get_json()
     language = data.get('language')
     table = data.get('table')
@@ -198,6 +224,8 @@ def insert_json_route():
 
 @app.route('/search', methods=['POST'])
 def search_route():
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
     data = request.get_json()
     query = data.get('query')
     table_type = data.get('table_type')
