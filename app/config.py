@@ -1,7 +1,7 @@
 DATABASES = {
     'kazakh': '../databases/cards_faq_kz.db',
     'russian': '../databases/cards_faq_ru.db',
-    'users': '../databases/users.db'
+    'users': '../databases/users_data.db'
 }
 
 BACKUP_DATABASES = {

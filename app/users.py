@@ -3,7 +3,7 @@ import random
 import string
 from config import DATABASES
 
-DATABASE = 'user_data.db'
+DATABASE = DATABASES.get('users')
 
 def connect_db():
     return sqlite3.connect(DATABASE)
