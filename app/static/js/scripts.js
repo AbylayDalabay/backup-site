@@ -1,18 +1,17 @@
-// Define the logout function globally
-function logout() {
-    fetch('/logout')
-        .then(response => {
-            if (response.ok) {
-                window.location.href = '/login';
-            } else {
-                console.error('Logout failed');
-            }
-        })
-        .catch(error => console.error('Error during logout:', error));
-}
-
 $(document).ready(function() {
     var originalValues = {};
+    var userRole;
+
+    // Fetch user info to update profile section and get user role
+    fetch('/get_user_info')
+        .then(response => response.json())
+        .then(data => { 
+            if (data.success) {
+                document.querySelector('.profile-circle').textContent = data.user.login[0].toUpperCase();
+                document.querySelector('.profile-name').textContent = data.user.login;
+                userRole = data.user.role;  // Store user role
+            }
+        });
 
     function fetchTableContent(language, table) {
         $.ajax({
@@ -56,7 +55,8 @@ $(document).ready(function() {
             var rowHtml = '<tr>';
             $.each(row, function(i, cell) {
                 var cellId = 'row-' + index + '-col-' + i;
-                rowHtml += '<td id="' + cellId + '" contenteditable="true" data-column="' + headers[i] + '" data-row-id="' + row[0] + '">' + cell + '</td>';
+                var contentEditable = userRole === 'editor' ? 'contenteditable="true"' : '';  // Allow editing only for editors
+                rowHtml += '<td id="' + cellId + '" ' + contentEditable + ' data-column="' + headers[i] + '" data-row-id="' + row[0] + '">' + cell + '</td>';
                 originalValues[cellId] = cell;
             });
             rowHtml += '<td><button class="delete-row" data-row-id="' + row[0] + '">Удалить</button></td>';
@@ -371,16 +371,8 @@ $(document).ready(function() {
 
     $('#language').trigger('change');
 
-    // Fetch user info to update profile section
-    fetch('/get_user_info')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                document.querySelector('.profile-circle').textContent = data.user.login[0].toUpperCase();
-                document.querySelector('.profile-name').textContent = data.user.login;
-            }
-        });
-
     // Attach logout function to the button
-    document.querySelector('.profile button').addEventListener('click', logout);
+    document.getElementById('logout-button').addEventListener('click', function() {
+        fetch('/logout').then(() => location.reload());
+    });
 });

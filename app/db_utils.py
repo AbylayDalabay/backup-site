@@ -54,7 +54,7 @@ def delete_row(database, table, row_id):
 def create_backup(language, table, username):
     source_db = DATABASES[language]
     backup_db = BACKUP_DATABASES[language]
-    timestamp = datetime.datetime.now().strftime('%Y_%m_%d_%H%M%S')
+    timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
     backup_table = f"{table}_{username}_{timestamp}"
     
     conn = connect_db(backup_db)
@@ -81,7 +81,7 @@ def get_backups(database, table):
     backups = fetch_all(cursor)
     close_db(conn)
 
-    # Filter backups to match the format productname_username_datetime
+    # Filter backups to match the format productname_username_ymd_hms
     backup_pattern = re.compile(rf"^{table}_[a-zA-Z0-9]+_\d{{8}}_\d{{6}}$")
     valid_backups = [backup[0] for backup in backups if backup_pattern.match(backup[0])]
 

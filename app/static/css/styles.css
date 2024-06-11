@@ -195,3 +195,69 @@ table.dataTable tbody tr:hover {
 .profile button:hover {
     background-color: #008C45;
 }
+
+/* Existing styles */
+
+/* Login Page Styles */
+.login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: #f4f4f9;
+}
+
+.login-container h2 {
+    margin-bottom: 20px;
+    font-family: 'Proxima Nova', sans-serif;
+    font-weight: 600;
+    color: #333;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 300px;
+}
+
+.login-form label {
+    align-self: flex-start;
+    margin-bottom: 5px;
+    font-family: 'Proxima Nova', sans-serif;
+    font-weight: 600;
+    color: #333;
+}
+
+.login-form input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-family: 'Proxima Nova', sans-serif;
+    font-weight: 400;
+}
+
+.login-form button {
+    padding: 10px;
+    background-color: #00A651;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Proxima Nova', sans-serif;
+    font-weight: 600;
+}
+
+.login-form button:hover {
+    background-color: #008C45;
+}
+
+
+

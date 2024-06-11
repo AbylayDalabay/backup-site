@@ -123,9 +123,14 @@ def update_cell_route():
     row_id = data.get('row_id')
     new_value = data.get('new_value')
     database = DATABASES[language]
-    create_backup(language, table)
+    user_id = session['user_id']
+    user = get_user_by_id(user_id)  # Fetch the user details
+    username = user['login']  # Extract the username from the user details
+    create_backup(language, table, username)
     update_cell(database, table, column, row_id, new_value)
     return jsonify(success=True)
+
+
 
 @app.route('/delete_row', methods=['POST'])
 def delete_row_route():
@@ -183,14 +188,16 @@ def insert_data_route():
         language = data.get('language')
         table = data.get('table')
         new_data = data.get('data')
-        username = session['user_id']  # Assuming you want to use the user_id as the username; change this if you have a different username field
-        backup_name = f"{table}_{username}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"  # Ensure correct format
+        user_id = session['user_id']
+        user = get_user_by_id(user_id)  # Fetch the user details
+        username = user['login']  # Extract the username from the user details
         create_backup(language, table, username)
         duplicate_found = insert_data_into_table(DATABASES[language], table, new_data)
         return jsonify(success=True, duplicate=duplicate_found)
     except Exception as e:
         print(f"Error inserting data: {e}")
         return jsonify(success=False, message=str(e)), 500
+
 
 @app.route('/get_user_info', methods=['GET'])
 def get_user_info():
