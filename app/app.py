@@ -28,7 +28,12 @@ def login():
         login = request.form['login']
         password = request.form['password']
         user = get_user_by_login(login)
-        if user and user['password'] == password:
+
+        print(password)
+        print(user['password'])
+        print(len(password) == len(user['password']))
+
+        if user and user['password'].strip() == password.strip():
             session['logged_in'] = True
             session['user_id'] = user['id']
             session['role'] = user['role']
