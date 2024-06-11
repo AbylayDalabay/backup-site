@@ -113,7 +113,7 @@ def insert_data_into_table(database, table_name, data, author='base'):
         conn = connect_db(database)
         cursor = conn.cursor()
         check_query = f'SELECT EXISTS(SELECT 1 FROM `{table_name}` WHERE question = ? LIMIT 1)'
-        insert_query = f'INSERT INTO `{table_name}` (id, question, answer, question_id, data_type, date, author) VALUES (?, ?, ?, ?, ?, ?, ?)'
+        insert_query = f'INSERT INTO `{table_name}` (id, question, answer, question_id, data_type) VALUES (?, ?, ?, ?, ?)'
 
         duplicate_found = False
 
@@ -131,7 +131,7 @@ def insert_data_into_table(database, table_name, data, author='base'):
             exists = cursor.fetchone()[0]
 
             if not exists:
-                cursor.execute(insert_query, (last_id + 1, question, answer, question_id, data_type, date_added, author))
+                cursor.execute(insert_query, (last_id + 1, question, answer, question_id, data_type))
                 last_id += 1
             else:
                 duplicate_found = True

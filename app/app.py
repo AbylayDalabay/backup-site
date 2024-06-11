@@ -134,10 +134,13 @@ def delete_row_route():
     language = data.get('language')
     table = data.get('table')
     row_id = data.get('row_id')
-    database = DATABASES[language]
-    create_backup(language, table)
-    success = delete_row(database, table, row_id)
+    user_id = session['user_id']
+    user = get_user_by_id(user_id)  # Fetch the user details
+    username = user['login']  # Extract the username from the user details
+    create_backup(language, table, username)
+    success = delete_row(DATABASES[language], table, row_id)
     return jsonify(success=success)
+
 
 @app.route('/get_backups', methods=['POST'])
 def get_backups_route():
