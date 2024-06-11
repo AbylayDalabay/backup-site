@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 from db_utils import (
     get_table_names, get_table_content, update_cell, delete_row, 
     create_backup, get_backups, get_backup_content, restore_backup, 
-    insert_data_into_table, get_last_row_id
+    insert_data_into_table, get_last_row_id, alter_all_tables
 )
 from users import create_table, add_user, get_user_by_id, get_all_users, update_user, delete_user, get_user_by_login
 from config import DATABASES, BACKUP_DATABASES
@@ -30,10 +30,6 @@ def login():
         login = request.form['login']
         password = request.form['password']
         user = get_user_by_login(login)
-
-        print(password)
-        print(user['password'])
-        print(len(password) == len(user['password']))
 
         if user and user['password'].strip() == password.strip():
             session['logged_in'] = True
@@ -130,8 +126,6 @@ def update_cell_route():
     update_cell(database, table, column, row_id, new_value)
     return jsonify(success=True)
 
-
-
 @app.route('/delete_row', methods=['POST'])
 def delete_row_route():
     if 'logged_in' not in session or session['role'] == 'viewer':
@@ -192,12 +186,11 @@ def insert_data_route():
         user = get_user_by_id(user_id)  # Fetch the user details
         username = user['login']  # Extract the username from the user details
         create_backup(language, table, username)
-        duplicate_found = insert_data_into_table(DATABASES[language], table, new_data)
+        duplicate_found = insert_data_into_table(DATABASES[language], table, new_data, author=username)
         return jsonify(success=True, duplicate=duplicate_found)
     except Exception as e:
         print(f"Error inserting data: {e}")
         return jsonify(success=False, message=str(e)), 500
-
 
 @app.route('/get_user_info', methods=['GET'])
 def get_user_info():
@@ -282,6 +275,13 @@ def search_route():
     except ValueError:
         print("Response was not valid JSON")
         return jsonify(success=False, results=[])
+
+@app.route('/alter_tables', methods=['POST'])
+def alter_tables():
+    if 'logged_in' not in session or session['role'] != 'admin':
+        return jsonify(success=False, message="Unauthorized"), 403
+    alter_all_tables()
+    return jsonify(success=True)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=7691)

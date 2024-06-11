@@ -3,7 +3,6 @@ import datetime
 import random
 import string
 import re
-
 from config import DATABASES, BACKUP_DATABASES
 
 # Utility Functions
@@ -109,12 +108,12 @@ def restore_backup(language, table, backup):
 def generate_message_id(k_len=20):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=k_len))
 
-def insert_data_into_table(database, table_name, data):
+def insert_data_into_table(database, table_name, data, author='base'):
     try:
         conn = connect_db(database)
         cursor = conn.cursor()
         check_query = f'SELECT EXISTS(SELECT 1 FROM `{table_name}` WHERE question = ? LIMIT 1)'
-        insert_query = f'INSERT INTO `{table_name}` (id, question, answer, question_id, data_type) VALUES (?, ?, ?, ?, ?)'
+        insert_query = f'INSERT INTO `{table_name}` (id, question, answer, question_id, data_type, date, author) VALUES (?, ?, ?, ?, ?, ?, ?)'
 
         duplicate_found = False
 
@@ -126,12 +125,13 @@ def insert_data_into_table(database, table_name, data):
             answer = entry.get('answer')
             question_id = generate_message_id()
             data_type = entry.get('data_type', 'manual')
+            date_added = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 
             cursor.execute(check_query, (question,))
             exists = cursor.fetchone()[0]
 
             if not exists:
-                cursor.execute(insert_query, (last_id + 1, question, answer, question_id, data_type))
+                cursor.execute(insert_query, (last_id + 1, question, answer, question_id, data_type, date_added, author))
                 last_id += 1
             else:
                 duplicate_found = True
@@ -144,10 +144,33 @@ def insert_data_into_table(database, table_name, data):
         print(f"Error inserting data into table: {e}")
         raise e
 
-
 def get_last_row_id(database, table_name):
     conn = connect_db(database)
     cursor = execute_query(conn, f'SELECT MAX(id) FROM {table_name}')
     last_row_id = cursor.fetchone()[0]
     close_db(conn)
     return last_row_id
+
+def alter_table_add_columns(database, table_name):
+    conn = connect_db(database)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(f"ALTER TABLE `{table_name}` ADD COLUMN `date` TEXT DEFAULT '0-0-0-0-0-0'")
+        cursor.execute(f"ALTER TABLE `{table_name}` ADD COLUMN `author` TEXT DEFAULT 'base'")
+        conn.commit()
+    except sqlite3.OperationalError as e:
+        print(f"Error altering table `{table_name}`: {e}")
+    finally:
+        close_db(conn)
+
+def alter_all_tables():
+    for db_key in DATABASES:
+        database = DATABASES[db_key]
+        tables = get_table_names(database)
+        for table in tables:
+            alter_table_add_columns(database, table)
+    for db_key in BACKUP_DATABASES:
+        database = BACKUP_DATABASES[db_key]
+        tables = get_table_names(database)
+        for table in tables:
+            alter_table_add_columns(database, table)
