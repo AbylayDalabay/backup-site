@@ -60,6 +60,9 @@ def create_backup(language, table, username):
     try:
         execute_query(conn, f"ATTACH DATABASE '{source_db}' AS source_db")
 
+        print("SOURCE DB: ", source_db)
+        print("BACKUP_DB: ", backup_db)
+
         # Check if the backup table already exists
         cursor = execute_query(conn, "SELECT name FROM sqlite_master WHERE type='table' AND name=?", (backup_table,))
         if cursor.fetchone():
