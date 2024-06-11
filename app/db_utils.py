@@ -2,6 +2,7 @@ import sqlite3
 import datetime
 import random
 import string
+import re
 
 from config import DATABASES, BACKUP_DATABASES
 
@@ -50,23 +51,41 @@ def delete_row(database, table, row_id):
     close_db(conn)
     return deleted > 0
 
-def create_backup(language, table):
+def create_backup(language, table, username):
     source_db = DATABASES[language]
     backup_db = BACKUP_DATABASES[language]
-    backup_table = f"{table}_backup_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+    timestamp = datetime.datetime.now().strftime('%Y_%m_%d_%H%M%S')
+    backup_table = f"{table}_{username}_{timestamp}"
     
     conn = connect_db(backup_db)
-    execute_query(conn, f"ATTACH DATABASE '{source_db}' AS source_db")
-    execute_query(conn, f"CREATE TABLE {backup_table} AS SELECT * FROM source_db.{table}")
-    conn.commit()
-    close_db(conn)
+    try:
+        execute_query(conn, f"ATTACH DATABASE '{source_db}' AS source_db")
+
+        # Check if the backup table already exists
+        cursor = execute_query(conn, "SELECT name FROM sqlite_master WHERE type='table' AND name=?", (backup_table,))
+        if cursor.fetchone():
+            print(f"Backup table `{backup_table}` already exists. Skipping backup creation.")
+            return
+
+        execute_query(conn, f"CREATE TABLE `{backup_table}` AS SELECT * FROM source_db.`{table}`")
+        conn.commit()
+    except Exception as e:
+        print(f"Error creating backup: {e}")
+        raise e
+    finally:
+        close_db(conn)
 
 def get_backups(database, table):
     conn = connect_db(database)
-    cursor = execute_query(conn, f"SELECT name FROM sqlite_master WHERE type='table' AND name LIKE '{table}_backup_%' ORDER BY name DESC;")
+    cursor = execute_query(conn, "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE ?", (f"{table}_%",))
     backups = fetch_all(cursor)
     close_db(conn)
-    return [backup[0] for backup in backups]
+
+    # Filter backups to match the format productname_username_datetime
+    backup_pattern = re.compile(rf"^{table}_[a-zA-Z0-9]+_\d{{8}}_\d{{6}}$")
+    valid_backups = [backup[0] for backup in backups if backup_pattern.match(backup[0])]
+
+    return valid_backups
 
 def get_backup_content(database, backup):
     conn = connect_db(database)
@@ -91,36 +110,40 @@ def generate_message_id(k_len=20):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=k_len))
 
 def insert_data_into_table(database, table_name, data):
-    conn = connect_db(database)
-    cursor = conn.cursor()
-    check_query = f'SELECT EXISTS(SELECT 1 FROM {table_name} WHERE question = ? LIMIT 1)'
-    insert_query = f'INSERT INTO {table_name} (id, question, answer, question_id, data_type) VALUES (?, ?, ?, ?, ?)'
+    try:
+        conn = connect_db(database)
+        cursor = conn.cursor()
+        check_query = f'SELECT EXISTS(SELECT 1 FROM `{table_name}` WHERE question = ? LIMIT 1)'
+        insert_query = f'INSERT INTO `{table_name}` (id, question, answer, question_id, data_type) VALUES (?, ?, ?, ?, ?)'
 
-    duplicate_found = False
+        duplicate_found = False
 
-    cursor.execute(f'SELECT MAX(id) FROM {table_name}')
-    last_id = cursor.fetchone()[0] or 0
+        cursor.execute(f'SELECT MAX(id) FROM `{table_name}`')
+        last_id = cursor.fetchone()[0] or 0
 
-    for entry in data:
-        question = entry.get('question')
-        answer = entry.get('answer')
-        question_id = generate_message_id()
-        data_type = entry.get('data_type', 'manual')
+        for entry in data:
+            question = entry.get('question')
+            answer = entry.get('answer')
+            question_id = generate_message_id()
+            data_type = entry.get('data_type', 'manual')
 
-        cursor.execute(check_query, (question,))
-        exists = cursor.fetchone()[0]
+            cursor.execute(check_query, (question,))
+            exists = cursor.fetchone()[0]
 
-        if not exists:
-            cursor.execute(insert_query, (last_id + 1, question, answer, question_id, data_type))
-            last_id += 1
-        else:
-            duplicate_found = True
-            print(f"Question already exists: {question}")
+            if not exists:
+                cursor.execute(insert_query, (last_id + 1, question, answer, question_id, data_type))
+                last_id += 1
+            else:
+                duplicate_found = True
+                print(f"Question already exists: {question}")
 
-    conn.commit()
-    close_db(conn)
+        conn.commit()
+        close_db(conn)
+        return duplicate_found
+    except Exception as e:
+        print(f"Error inserting data into table: {e}")
+        raise e
 
-    return duplicate_found
 
 def get_last_row_id(database, table_name):
     conn = connect_db(database)

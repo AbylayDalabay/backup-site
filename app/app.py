@@ -7,6 +7,7 @@ from db_utils import (
 from users import create_table, add_user, get_user_by_id, get_all_users, update_user, delete_user, get_user_by_login
 from config import DATABASES, BACKUP_DATABASES
 import requests
+import datetime
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
@@ -20,7 +21,8 @@ add_user('abylai', 'admin')
 def index():
     if 'logged_in' not in session:
         return redirect(url_for('login'))
-    return render_template('index.html', role=session['role'])
+    user = get_user_by_id(session['user_id'])
+    return render_template('index.html', role=session['role'], user=user)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -55,10 +57,11 @@ def admin():
         return redirect(url_for('login'))
     if session['role'] != 'admin':
         return redirect(url_for('index'))
+    user = get_user_by_id(session['user_id'])
     users = get_all_users()
-    return render_template('admin.html', users=users)
+    return render_template('admin.html', users=users, user=user)
 
-@app.route('/add_user', methods=['POST'])
+@app.route('/add_user', methods=['POST'])   
 def add_user_route():
     if 'logged_in' not in session or session['role'] != 'admin':
         return jsonify(success=False, message="Unauthorized"), 403
@@ -175,14 +178,27 @@ def restore_backup_route():
 def insert_data_route():
     if 'logged_in' not in session or session['role'] == 'viewer':
         return jsonify(success=False, message="Unauthorized"), 403
-    data = request.get_json()
-    language = data.get('language')
-    table = data.get('table')
-    new_data = data.get('data')
-    database = DATABASES[language]
-    create_backup(language, table)
-    duplicate_found = insert_data_into_table(database, table, new_data)
-    return jsonify(success=True, duplicate=duplicate_found)
+    try:
+        data = request.get_json()
+        language = data.get('language')
+        table = data.get('table')
+        new_data = data.get('data')
+        username = session['user_id']  # Assuming you want to use the user_id as the username; change this if you have a different username field
+        backup_name = f"{table}_{username}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"  # Ensure correct format
+        create_backup(language, table, username)
+        duplicate_found = insert_data_into_table(DATABASES[language], table, new_data)
+        return jsonify(success=True, duplicate=duplicate_found)
+    except Exception as e:
+        print(f"Error inserting data: {e}")
+        return jsonify(success=False, message=str(e)), 500
+
+@app.route('/get_user_info', methods=['GET'])
+def get_user_info():
+    if 'logged_in' not in session:
+        return jsonify(success=False), 403
+    user_id = session['user_id']
+    user = get_user_by_id(user_id)
+    return jsonify(success=True, user=user)
 
 @app.route('/get_last_row_id', methods=['POST'])
 def get_last_row_id_route():

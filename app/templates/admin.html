@@ -4,56 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <h2>Admin Page</h2>
-    <button onclick="logout()">Logout</button>
-    <h3>Users</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Login</th>
-                <th>Role</th>
-                <th>Password</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="users-table">
-            {% for user in users %}
-            <tr>
-                <td>{{ user[0] }}</td>
-                <td>{{ user[1] }}</td>
-                <td>{{ user[3] }}</td>
-                <td>{{ user[2] }}</td>
-                <td>
-                    <button onclick="editUser('{{ user[0] }}', '{{ user[1] }}', '{{ user[3] }}')">Edit</button>
-                    <button onclick="deleteUser('{{ user[0] }}')">Delete</button>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="sidebar">
+        <img src="{{ url_for('static', filename='assets/logotype.svg') }}" alt="BCC Bank Logo">
+        <button onclick="logout()">Logout</button>
+    </div>
+    <div class="main-content">
+        <div class="profile">
+            <div class="profile-circle">{{ user.login[0] }}</div>
+            <div class="profile-name">{{ user.login }}</div>
+            <button onclick="logout()">Logout</button>
+        </div>
+        <h2>Admin Page</h2>
+        <h3>Users</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Login</th>
+                    <th>Role</th>
+                    <th>Password</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="users-table">
+                {% for user in users %}
+                <tr>
+                    <td>{{ user[0] }}</td>
+                    <td>{{ user[1] }}</td>
+                    <td>{{ user[3] }}</td>
+                    <td>{{ user[2] }}</td>
+                    <td>
+                        <button onclick="editUser('{{ user[0] }}', '{{ user[1] }}', '{{ user[3] }}')">Edit</button>
+                        <button onclick="deleteUser('{{ user[0] }}')">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
 
-    <h3>Add User</h3>
-    <form id="add-user-form">
-        <label for="new-login">Login:</label>
-        <input type="text" id="new-login" name="login" required>
-        <label for="new-role">Role:</label>
-        <input type="text" id="new-role" name="role" required>
-        <button type="submit">Add User</button>
-    </form>
+        <h3>Add User</h3>
+        <form id="add-user-form">
+            <label for="new-login">Login:</label>
+            <input type="text" id="new-login" name="login" required>
+            <label for="new-role">Role:</label>
+            <input type="text" id="new-role" name="role" required>
+            <button type="submit">Add User</button>
+        </form>
 
-    <h3>Edit User</h3>
-    <form id="edit-user-form" style="display:none;">
-        <input type="hidden" id="edit-id" name="id">
-        <label for="edit-login">Login:</label>
-        <input type="text" id="edit-login" name="login" required>
-        <label for="edit-role">Role:</label>
-        <input type="text" id="edit-role" name="role" required>
-        <button type="submit">Update User</button>
-    </form>
+        <h3>Edit User</h3>
+        <form id="edit-user-form" style="display:none;">
+            <input type="hidden" id="edit-id" name="id">
+            <label for="edit-login">Login:</label>
+            <input type="text" id="edit-login" name="login" required>
+            <label for="edit-role">Role:</label>
+            <input type="text" id="edit-role" name="role" required>
+            <button type="submit">Update User</button>
+        </form>
+    </div>
 
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
     <script>
         document.getElementById('add-user-form').onsubmit = async function(event) {
             event.preventDefault();

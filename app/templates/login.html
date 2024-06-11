@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
     <h2>Login</h2>
@@ -14,5 +15,14 @@
         <input type="password" id="password" name="password" required>
         <button type="submit">Login</button>
     </form>
+    <script>
+        function clearLoginFields() {
+            document.getElementById('login').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // Clear fields when the page loads
+        window.onload = clearLoginFields;
+    </script>
 </body>
 </html>

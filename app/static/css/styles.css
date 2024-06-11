@@ -1,4 +1,4 @@
-/* this is /css/styles.css */
+/* styles.css */
 @import url('https://fonts.googleapis.com/css2?family=Proxima+Nova:wght@400;600&display=swap');
 
 body {
@@ -51,6 +51,28 @@ body {
     overflow: auto;
     font-family: 'Proxima Nova', sans-serif;
     font-weight: 400;
+    position: relative;
+}
+.main-content .profile {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    text-align: center;
+}
+.profile-circle {
+    width: 50px;
+    height: 50px;
+    background-color: #00A651;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+.profile-name {
+    font-weight: 600;
 }
 .main-content section {
     margin-bottom: 20px;
@@ -139,4 +161,37 @@ table.dataTable tbody tr:hover {
 #notification.duplicate {
     background-color: #FFA500;
     color: #fff;
+}
+.profile {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+.profile .profile-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #00A651;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-right: 10px;
+}
+.profile .profile-name {
+    font-weight: 600;
+    margin-right: 20px;
+}
+.profile button {
+    background-color: #00A651;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+.profile button:hover {
+    background-color: #008C45;
 }

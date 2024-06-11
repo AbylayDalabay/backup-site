@@ -1,4 +1,16 @@
-// this is /js/scripts.js
+// Define the logout function globally
+function logout() {
+    fetch('/logout')
+        .then(response => {
+            if (response.ok) {
+                window.location.href = '/login';
+            } else {
+                console.error('Logout failed');
+            }
+        })
+        .catch(error => console.error('Error during logout:', error));
+}
+
 $(document).ready(function() {
     var originalValues = {};
 
@@ -227,7 +239,7 @@ $(document).ready(function() {
                         success: function(response) {
                             if (response.success) {
                                 fetchTableContent(language, table);
-                                fetchBackups(language, table);
+                                fetchBackups(language, table);  // Refresh backups select box
                                 if (response.duplicate) {
                                     showNotification('Вставка успешна, но вопрос уже существует', 'duplicate');
                                 } else {
@@ -358,4 +370,17 @@ $(document).ready(function() {
     });
 
     $('#language').trigger('change');
+
+    // Fetch user info to update profile section
+    fetch('/get_user_info')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.querySelector('.profile-circle').textContent = data.user.login[0].toUpperCase();
+                document.querySelector('.profile-name').textContent = data.user.login;
+            }
+        });
+
+    // Attach logout function to the button
+    document.querySelector('.profile button').addEventListener('click', logout);
 });

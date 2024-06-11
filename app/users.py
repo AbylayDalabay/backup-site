@@ -46,7 +46,15 @@ def get_user_by_id(user_id):
     cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
     user = cursor.fetchone()
     conn.close()
-    return user
+    if user:
+        return {
+            'id': user[0],
+            'login': user[1],
+            'password': user[2],
+            'role': user[3]
+        }
+    else:
+        return None
 
 def get_user_by_login(login):
     conn = connect_db()

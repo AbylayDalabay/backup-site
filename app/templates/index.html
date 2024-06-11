@@ -25,13 +25,21 @@
         <select id="backup" name="backup">
             <option value="">--Не Выбрано--</option>
         </select>
-        <button id="restore-button" {% if role == 'viewer' %}style="display:none;"{% endif %}>Восстановить</button>
+        {% if role != 'viewer' %}
+        <button id="restore-button">Восстановить</button>
+        {% endif %}
         <button id="show-current-button">Показать Текущие Данные</button>
         <div id="notification" class="hidden"></div>
     </div>
     <div class="main-content">
+        <div class="profile">
+            <div class="profile-circle">{{ user['login'][0] }}</div>
+            <div class="profile-name">{{ user['login'] }}</div>
+            <button id="logout-button">Logout</button>
+        </div>
         <section id="insert-section" class="hidden">
-            <button class="toggle-button" id="toggle-insert-section" {% if role == 'viewer' %}style="display:none;"{% endif %}>Показать Раздел Вставки</button>
+            {% if role != 'viewer' %}
+            <button class="toggle-button" id="toggle-insert-section">Показать Раздел Вставки</button>
             <div class="section-content">
                 <form id="insert-form">
                     <label for="question">Вопрос:</label>
@@ -42,12 +50,13 @@
                     <input type="text" id="data_type" name="data_type" value="manual"><br>
                     <button type="submit" class="submit-json-button">Отправить</button>
                 </form>
-                <button id="toggle-json-section" class="toggle-button arrow-down" {% if role == 'viewer' %}style="display:none;"{% endif %}>Вставить JSON</button>
+                <button id="toggle-json-section" class="toggle-button arrow-down">Вставить JSON</button>
                 <div id="json-section" class="hidden">
                     <textarea id="json-input" rows="10" cols="50" placeholder="Вставьте JSON данные здесь"></textarea>
                     <button id="insert-json-button" class="submit-json-button">Отправить JSON</button>
                 </div>
             </div>
+            {% endif %}
         </section>
 
         <section id="search-section" class="hidden">
@@ -75,5 +84,6 @@
             </div>
         </section>
     </div>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 </body>
 </html>
