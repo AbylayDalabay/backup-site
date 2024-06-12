@@ -298,3 +298,56 @@ table.dataTable tbody tr:hover {
 .login-form button:hover {
     background-color: #008C45;
 }
+
+
+/* Add these styles at the end of your existing styles.css */
+
+/* Styling for the modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0, 0, 0);
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;  /* Adjusted margin for better placement */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 90%;  /* Increased width */
+    max-width: 1200px;  /* Increased max-width */
+}
+
+.modal-close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.modal-close:hover,
+.modal-close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.iframe-container {
+    position: relative;
+    width: 100%;
+    height: 600px;  /* Increased height */
+}
+
+.iframe-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+

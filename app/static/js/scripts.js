@@ -57,7 +57,7 @@ $(document).ready(function() {
                 var cellId = 'row-' + index + '-col-' + i;
                 var contentEditable = userRole === 'editor' ? 'contenteditable="true"' : '';  // Allow editing only for editors
                 if (headers[i] === 'link') {
-                    rowHtml += '<td id="' + cellId + '" ' + contentEditable + ' data-column="' + headers[i] + '" data-row-id="' + row[0] + '"><a href="' + cell + '" target="_blank">' + cell + '</a></td>';
+                    rowHtml += '<td id="' + cellId + '" ' + contentEditable + ' data-column="' + headers[i] + '" data-row-id="' + row[0] + '"><div class="iframe-container"><a href="' + cell + '" class="link-click">' + cell + '</a><div class="iframe-preview"></div></div></td>';
                 } else {
                     rowHtml += '<td id="' + cellId + '" ' + contentEditable + ' data-column="' + headers[i] + '" data-row-id="' + row[0] + '">' + cell + '</td>';
                 }
@@ -378,5 +378,27 @@ $(document).ready(function() {
     // Attach logout function to the button
     document.getElementById('logout-button').addEventListener('click', function() {
         fetch('/logout').then(() => location.reload());
+    });
+
+    // Click functionality for link previews
+    $(document).on('click', '.link-click', function(e) {
+        e.preventDefault();
+        var link = $(this).attr('href');
+        $('#modal-iframe').attr('src', link);
+        $('#iframe-modal').show();
+    });
+
+    // Close modal
+    $(document).on('click', '.modal-close', function() {
+        $('#iframe-modal').hide();
+        $('#modal-iframe').attr('src', '');
+    });
+
+    // Close modal when clicking outside of the modal content
+    $(window).on('click', function(event) {
+        if ($(event.target).hasClass('modal')) {
+            $('#iframe-modal').hide();
+            $('#modal-iframe').attr('src', '');
+        }
     });
 });
