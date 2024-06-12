@@ -56,7 +56,11 @@ $(document).ready(function() {
             $.each(row, function(i, cell) {
                 var cellId = 'row-' + index + '-col-' + i;
                 var contentEditable = userRole === 'editor' ? 'contenteditable="true"' : '';  // Allow editing only for editors
-                rowHtml += '<td id="' + cellId + '" ' + contentEditable + ' data-column="' + headers[i] + '" data-row-id="' + row[0] + '">' + cell + '</td>';
+                if (headers[i] === 'link') {
+                    rowHtml += '<td id="' + cellId + '" ' + contentEditable + ' data-column="' + headers[i] + '" data-row-id="' + row[0] + '"><a href="' + cell + '" target="_blank">' + cell + '</a></td>';
+                } else {
+                    rowHtml += '<td id="' + cellId + '" ' + contentEditable + ' data-column="' + headers[i] + '" data-row-id="' + row[0] + '">' + cell + '</td>';
+                }
                 originalValues[cellId] = cell;
             });
             rowHtml += '<td><button class="delete-row" data-row-id="' + row[0] + '">Удалить</button></td>';

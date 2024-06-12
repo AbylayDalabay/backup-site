@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 from db_utils import (
     get_table_names, get_table_content, update_cell, delete_row, 
     create_backup, get_backups, get_backup_content, restore_backup, 
-    insert_data_into_table, get_last_row_id, alter_all_tables
+    insert_data_into_table, get_last_row_id
 )
 from users import create_table, add_user, get_user_by_id, get_all_users, update_user, delete_user, get_user_by_login
 from config import DATABASES, BACKUP_DATABASES
@@ -141,7 +141,6 @@ def delete_row_route():
     success = delete_row(DATABASES[language], table, row_id)
     return jsonify(success=success)
 
-
 @app.route('/get_backups', methods=['POST'])
 def get_backups_route():
     if 'logged_in' not in session:
@@ -232,13 +231,17 @@ def insert_json_route():
             valid_entries.append({
                 'question': entry['question_ru'],
                 'answer': entry['answer_ru'],
-                'data_type': entry.get('type', 'manual')
+                'data_type': entry.get('type', 'manual'),
+                'date': entry.get('date', '0000y00m00d_00h00m00s'),
+                'link': entry.get('link', 'https://www.bcc.kz/')
             })
         elif 'question_kz' in entry and 'answer_kz' in entry:
             valid_entries.append({
                 'question': entry['question_kz'],
                 'answer': entry['answer_kz'],
-                'data_type': entry.get('type', 'manual')
+                'data_type': entry.get('type', 'manual'),
+                'date': entry.get('date', '0000y00m00d_00h00m00s'),
+                'link': entry.get('link', 'https://www.bcc.kz/')
             })
 
     if valid_entries:
@@ -278,13 +281,6 @@ def search_route():
     except ValueError:
         print("Response was not valid JSON")
         return jsonify(success=False, results=[])
-
-@app.route('/alter_tables', methods=['POST'])
-def alter_tables():
-    if 'logged_in' not in session or session['role'] != 'admin':
-        return jsonify(success=False, message="Unauthorized"), 403
-    alter_all_tables()
-    return jsonify(success=True)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=7691)
