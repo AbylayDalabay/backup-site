@@ -77,6 +77,7 @@ def create_backup(language, table, username):
     finally:
         close_db(conn)
 
+
 def get_backups(database, table):
     conn = connect_db(database)
     cursor = execute_query(conn, "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE ?", (f"{table}_%",))

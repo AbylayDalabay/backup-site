@@ -222,7 +222,12 @@ def insert_json_route():
     table = data.get('table')
     json_data = data.get('data')
     database = DATABASES[language]
-    create_backup(language, table)
+
+    user_id = session['user_id']
+    user = get_user_by_id(user_id)  # Fetch the user details
+    username = user['login']  # Extract the username from the user details
+
+    create_backup(language, table, username)
 
     valid_entries = []
     duplicate_found = False
@@ -248,6 +253,7 @@ def insert_json_route():
         duplicate_found = insert_data_into_table(database, table, valid_entries)
     
     return jsonify(success=True, duplicate=duplicate_found)
+
 
 @app.route('/search', methods=['POST'])
 def search_route():
