@@ -298,36 +298,24 @@ $(document).ready(function() {
     });
 
     $('#toggle-insert-section').click(function() {
-        var buttonText = $(this).text();
-        if (buttonText === 'Скрыть Раздел Вставки') {
-            $('#insert-section .section-content').hide();
-            $(this).text('Показать Раздел Вставки');
-        } else {
-            $('#insert-section .section-content').show();
-            $(this).text('Скрыть Раздел Вставки');
-        }
+        var sectionContent = $('#insert-section .section-content');
+        sectionContent.toggle();
+        var buttonText = sectionContent.is(':visible') ? 'Скрыть Раздел Вставки' : 'Показать Раздел Вставки';
+        $(this).text(buttonText);
     });
 
     $('#toggle-search-section').click(function() {
-        var buttonText = $(this).text();
-        if (buttonText === 'Скрыть Раздел Поиска') {
-            $('#search-section .section-content').hide();
-            $(this).text('Показать Раздел Поиска');
-        } else {
-            $('#search-section .section-content').show();
-            $(this).text('Скрыть Раздел Поиска');
-        }
+        var sectionContent = $('#search-section .section-content');
+        sectionContent.toggle();
+        var buttonText = sectionContent.is(':visible') ? 'Скрыть Раздел Поиска' : 'Показать Раздел Поиска';
+        $(this).text(buttonText);
     });
 
     $('#toggle-table-section').click(function() {
-        var buttonText = $(this).text();
-        if (buttonText === 'Скрыть Раздел Таблицы') {
-            $('#table-section .section-content').hide();
-            $(this).text('Показать Раздел Таблицы');
-        } else {
-            $('#table-section .section-content').show();
-            $(this).text('Скрыть Раздел Таблицы');
-        }
+        var sectionContent = $('#table-section .section-content');
+        sectionContent.toggle();
+        var buttonText = sectionContent.is(':visible') ? 'Скрыть Раздел Таблицы' : 'Показать Раздел Таблицы';
+        $(this).text(buttonText);
     });
 
     $('#search-form').submit(function(event) {
