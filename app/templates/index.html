@@ -29,13 +29,13 @@
         <button id="restore-button">Восстановить</button>
         {% endif %}
         <button id="show-current-button">Показать Текущие Данные</button>
+        <button id="logout-button">Logout</button>
         <div id="notification" class="hidden"></div>
     </div>
     <div class="main-content">
         <div class="profile">
             <div class="profile-circle">{{ user['login'][0] }}</div>
-            <div class="profile-name">{{ user['login'] }}</div>
-            <button id="logout-button">Logout</button>
+            <div class="profile-name">{{ user['login'] }} - {{ user['role'] }}</div>
         </div>
         <section id="insert-section" class="hidden">
             {% if role != 'viewer' %}
