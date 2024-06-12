@@ -229,30 +229,37 @@ def insert_json_route():
 
     create_backup(language, table, username)
 
-    valid_entries = []
+    valid_entries_kz = []
+    valid_entries_ru = []
     duplicate_found = False
+
     for entry in json_data:
-        if 'question_ru' in entry and 'answer_ru' in entry:
-            valid_entries.append({
-                'question': entry['question_ru'],
-                'answer': entry['answer_ru'],
-                'data_type': entry.get('type', 'manual'),
-                'date': entry.get('date', '0000y00m00d_00h00m00s'),
-                'link': entry.get('link', 'https://www.bcc.kz/')
-            })
-        elif 'question_kz' in entry and 'answer_kz' in entry:
-            valid_entries.append({
+        if 'question_kz' in entry and 'answer_kz' in entry:
+            valid_entries_kz.append({
                 'question': entry['question_kz'],
                 'answer': entry['answer_kz'],
                 'data_type': entry.get('type', 'manual'),
                 'date': entry.get('date', '0000y00m00d_00h00m00s'),
                 'link': entry.get('link', 'https://www.bcc.kz/')
             })
+        if 'question_ru' in entry and 'answer_ru' in entry:
+            valid_entries_ru.append({
+                'question': entry['question_ru'],
+                'answer': entry['answer_ru'],
+                'data_type': entry.get('type', 'manual'),
+                'date': entry.get('date', '0000y00m00d_00h00m00s'),
+                'link': entry.get('link', 'https://www.bcc.kz/')
+            })
 
-    if valid_entries:
-        duplicate_found = insert_data_into_table(database, table, valid_entries)
+    if valid_entries_kz:
+        duplicate_found_kz = insert_data_into_table(DATABASES['kazakh'], table, valid_entries_kz)
+    if valid_entries_ru:
+        duplicate_found_ru = insert_data_into_table(DATABASES['russian'], table, valid_entries_ru)
+
+    duplicate_found = duplicate_found_kz or duplicate_found_ru
     
     return jsonify(success=True, duplicate=duplicate_found)
+
 
 
 @app.route('/search', methods=['POST'])
