@@ -64,20 +64,22 @@ body {
     align-items: center;
     justify-content: flex-end;
     gap: 10px;
+    margin-top: 10px; /* Added margin to create space from the top */
+    margin-bottom: 10px; /* Added margin to create space from the bottom */
 }
 
 .profile-circle {
-    width: 50px;
-    height: 50px;
+    width: 30px;
+    height: 30px;
     background-color: #00A651;
     color: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
-    margin-bottom: 5px;
+    font-size: 16px;
 }
+
 
 .profile-name {
     font-weight: 600;
@@ -125,10 +127,9 @@ table.dataTable {
 table.dataTable th, table.dataTable td {
     padding: 8px;
     border: 1px solid #ddd;
-    vertical-align: top;
+    vertical-align: middle;
     word-wrap: break-word;
     white-space: normal;
-    max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
 }

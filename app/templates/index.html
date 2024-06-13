@@ -37,8 +37,8 @@
             <div class="profile-circle">{{ user['login'][0] }}</div>
             <div class="profile-name">{{ user['login'] }} - {{ user['role'] }}</div>
         </div>
+        {% if role != 'viewer' %}
         <section id="insert-section" class="hidden">
-            {% if role != 'viewer' %}
             <button class="toggle-button" id="toggle-insert-section">Показать Раздел Вставки</button>
             <div class="section-content">
                 <form id="insert-form">
@@ -56,9 +56,8 @@
                     <button id="insert-json-button" class="submit-json-button">Отправить JSON</button>
                 </div>
             </div>
-            {% endif %}
         </section>
-
+        {% endif %}
         <section id="search-section" class="hidden">
             <button class="toggle-button" id="toggle-search-section">Показать Раздел Поиска</button>
             <div class="section-content">
