@@ -8,6 +8,24 @@ DATABASE = DATABASES.get('users')
 def connect_db():
     return sqlite3.connect(DATABASE)
 
+
+def reorder_ids():
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+    CREATE TEMPORARY TABLE temp_users AS
+    SELECT ROW_NUMBER() OVER (ORDER BY id) as id, login, password, role
+    FROM users
+    ''')
+    cursor.execute('DELETE FROM users')
+    cursor.execute('''
+    INSERT INTO users (id, login, password, role)
+    SELECT id, login, password, role FROM temp_users
+    ''')
+    conn.commit()
+    conn.close()
+
+
 def create_table():
     conn = connect_db()
     cursor = conn.cursor()
@@ -36,6 +54,7 @@ def add_user(login, role='viewer'):
         ''', (login, password, role))
         conn.commit()
         print(f"User added: {login}, Password: {password}, Role: {role}")
+        reorder_ids()
     except sqlite3.IntegrityError as e:
         print(f"Error adding user: {e}")
     conn.close()
@@ -96,3 +115,4 @@ def delete_user(user_id):
     cursor.execute('DELETE FROM users WHERE id = ?', (user_id,))
     conn.commit()
     conn.close()
+    reorder_ids()
