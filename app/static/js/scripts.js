@@ -79,13 +79,13 @@ $(document).ready(function() {
             data: JSON.stringify({ language: language, table: table }),
             success: function(response) {
                 $('#backup').empty().append('<option value="">--Не Выбрано--</option>');
-                $.each(response, function(index, backup) {
+                $.each(response.reverse(), function(index, backup) {
                     $('#backup').append('<option value="' + backup + '">' + backup + '</option>');
                 });
             }
         });
     }
-
+    
     function showNotification(message, type) {
         var notification = $('#notification');
         notification.removeClass('hidden').removeClass('success error duplicate').addClass(type).text(message);
