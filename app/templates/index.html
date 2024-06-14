@@ -1,97 +1,107 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Просмотр Базы Данных</title>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
-</head>
-<body>
-    <div class="sidebar">
-        <img src="{{ url_for('static', filename='assets/logotype.svg') }}" alt="BCC Bank Logo">
-        <label for="language">Выбрать Язык:</label>
-        <select id="language" name="language">
-            <option value="russian" selected>Русский</option>
-            <option value="kazakh">Казахский</option>
-        </select>
-        <label for="table">Выбрать Таблицу:</label>
-        <select id="table" name="table">
-            <option value="">--Выбрать Таблицу--</option>
-        </select>
-        <label for="backup">Выбрать Резервную Копию:</label>
-        <select id="backup" name="backup">
-            <option value="">--Не Выбрано--</option>
-        </select>
-        {% if role != 'viewer' %}
-        <button id="restore-button">Восстановить</button>
-        {% endif %}
-        <button id="show-current-button">Показать Текущие Данные</button>
-        <button id="logout-button">Logout</button>
-        <div id="notification" class="hidden"></div>
-    </div>
-    <div class="main-content">
-        <div class="profile">
-            <div class="profile-circle">{{ user['login'][0] }}</div>
-            <div class="profile-name">{{ user['login'] }} - {{ user['role'] }}</div>
+    <!DOCTYPE html>
+    <html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <title>Просмотр Базы Данных</title>
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+        <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+        <style>
+            .table-container {
+                overflow-x: auto;
+                width: 100%;
+            }
+            table {
+                width: 100%;
+                table-layout: fixed;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="sidebar">
+            <img src="{{ url_for('static', filename='assets/logotype.svg') }}" alt="BCC Bank Logo">
+            <label for="language">Выбрать Язык:</label>
+            <select id="language" name="language">
+                <option value="russian" selected>Русский</option>
+                <option value="kazakh">Казахский</option>
+            </select>
+            <label for="table">Выбрать Таблицу:</label>
+            <select id="table" name="table">
+                <option value="">--Выбрать Таблицу--</option>
+            </select>
+            <label for="backup">Выбрать Резервную Копию:</label>
+            <select id="backup" name="backup">
+                <option value="">--Не Выбрано--</option>
+            </select>
+            {% if role != 'viewer' %}
+            <button id="restore-button">Восстановить</button>
+            {% endif %}
+            <button id="show-current-button">Показать Текущие Данные</button>
+            <button id="logout-button">Logout</button>
+            <div id="notification" class="hidden"></div>
         </div>
-        {% if role != 'viewer' %}
-        <section id="insert-section" class="hidden">
-            <button class="toggle-button" id="toggle-insert-section">Показать Раздел Вставки</button>
-            <div class="section-content">
-                <form id="insert-form">
-                    <label for="question">Вопрос:</label>
-                    <input type="text" id="question" name="question"><br>
-                    <label for="answer">Ответ:</label>
-                    <input type="text" id="answer" name="answer"><br>
-                    <label for="data_type">Тип Данных:</label>
-                    <input type="text" id="data_type" name="data_type" value="manual"><br>
-                    <button type="submit" class="submit-json-button">Отправить</button>
-                </form>
-                <button id="toggle-json-section" class="toggle-button arrow-down">Вставить JSON</button>
-                <div id="json-section" class="hidden">
-                    <textarea id="json-input" rows="10" cols="50" placeholder="Вставьте JSON данные здесь"></textarea>
-                    <button id="insert-json-button" class="submit-json-button">Отправить JSON</button>
+        <div class="main-content">
+            <div class="profile">
+                <div class="profile-circle">{{ user['login'][0] }}</div>
+                <div class="profile-name">{{ user['login'] }} - {{ user['role'] }}</div>
+            </div>
+            {% if role != 'viewer' %}
+            <section id="insert-section" class="hidden">
+                <button class="toggle-button" id="toggle-insert-section">Показать Раздел Вставки</button>
+                <div class="section-content">
+                    <form id="insert-form">
+                        <label for="question">Вопрос:</label>
+                        <input type="text" id="question" name="question"><br>
+                        <label for="answer">Ответ:</label>
+                        <input type="text" id="answer" name="answer"><br>
+                        <label for="data_type">Тип Данных:</label>
+                        <input type="text" id="data_type" name="data_type" value="manual"><br>
+                        <button type="submit" class="submit-json-button">Отправить</button>
+                    </form>
+                    <button id="toggle-json-section" class="toggle-button arrow-down">Вставить JSON</button>
+                    <div id="json-section" class="hidden">
+                        <textarea id="json-input" rows="10" cols="50" placeholder="Вставьте JSON данные здесь"></textarea>
+                        <button id="insert-json-button" class="submit-json-button">Отправить JSON</button>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+            <section id="search-section" class="hidden">
+                <button class="toggle-button" id="toggle-search-section">Показать Раздел Поиска</button>
+                <div class="section-content">
+                    <form id="search-form">
+                        <label for="query">Запрос:</label>
+                        <input type="text" id="query" name="query"><br>
+                        <button type="submit" class="submit-json-button">Отправить</button>
+                        <button type="button" id="clear-results" class="submit-json-button">Очистить Результаты</button>
+                    </form>
+                    <div id="search-results"></div>
+                </div>
+            </section>
+
+            <section id="table-section">
+                <button class="toggle-button" id="toggle-table-section">Скрыть Раздел Таблицы</button>
+                <div class="section-content table-container">
+                    <table id="table-content" class="display" style="width:100%">
+                        <thead>
+                            <tr id="table-headers"></tr>
+                        </thead>
+                        <tbody id="table-rows"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+        
+        <!-- Modal for iframe -->
+        <div id="iframe-modal" class="modal">
+            <div class="modal-content">
+                <span class="modal-close">&times;</span>
+                <div class="iframe-container">
+                    <iframe id="modal-iframe" src=""></iframe>
                 </div>
             </div>
-        </section>
-        {% endif %}
-        <section id="search-section" class="hidden">
-            <button class="toggle-button" id="toggle-search-section">Показать Раздел Поиска</button>
-            <div class="section-content">
-                <form id="search-form">
-                    <label for="query">Запрос:</label>
-                    <input type="text" id="query" name="query"><br>
-                    <button type="submit" class="submit-json-button">Отправить</button>
-                    <button type="button" id="clear-results" class="submit-json-button">Очистить Результаты</button>
-                </form>
-                <div id="search-results"></div>
-            </div>
-        </section>
-
-        <section id="table-section">
-            <button class="toggle-button" id="toggle-table-section">Скрыть Раздел Таблицы</button>
-            <div class="section-content">
-                <table id="table-content" class="display" style="width:100%">
-                    <thead>
-                        <tr id="table-headers"></tr>
-                    </thead>
-                    <tbody id="table-rows"></tbody>
-                </table>
-            </div>
-        </section>
-    </div>
-    
-    <!-- Modal for iframe -->
-    <div id="iframe-modal" class="modal">
-        <div class="modal-content">
-            <span class="modal-close">&times;</span>
-            <div class="iframe-container">
-                <iframe id="modal-iframe" src=""></iframe>
-            </div>
         </div>
-    </div>
-</body>
-</html>
+    </body>
+    </html>
