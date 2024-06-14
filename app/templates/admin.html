@@ -15,7 +15,6 @@
         <div class="profile">
             <div class="profile-circle">{{ user.login[0] }}</div>
             <div class="profile-name">{{ user.login }}</div>
-            <!-- <button onclick="logout()">Logout</button> -->
         </div>
         <h2>Admin Page</h2>
         <h3>Users</h3>
@@ -50,7 +49,11 @@
             <label for="new-login">Login:</label>
             <input type="text" id="new-login" name="login" required>
             <label for="new-role">Role:</label>
-            <input type="text" id="new-role" name="role" required>
+            <select id="new-role" name="role" required>
+                <option value="viewer">Viewer</option>
+                <option value="editor">Editor</option>
+                <option value="admin">Admin</option>
+            </select>
             <button type="submit">Add User</button>
         </form>
 
@@ -60,7 +63,11 @@
             <label for="edit-login">Login:</label>
             <input type="text" id="edit-login" name="login" required>
             <label for="edit-role">Role:</label>
-            <input type="text" id="edit-role" name="role" required>
+            <select id="edit-role" name="role" required>
+                <option value="viewer">Viewer</option>
+                <option value="editor">Editor</option>
+                <option value="admin">Admin</option>
+            </select>
             <button type="submit">Update User</button>
         </form>
     </div>
