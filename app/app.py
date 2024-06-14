@@ -14,7 +14,7 @@ app = Flask(__name__, static_folder='static', template_folder='templates')
 create_table()
 app.secret_key = 'your_secret_key12'
 
-add_user('abylai', 'admin')
+# add_user('admin', 'admin')
 
 # Routes
 @app.route('/')
