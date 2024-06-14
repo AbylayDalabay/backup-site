@@ -48,6 +48,13 @@ def add_user(login, role='viewer'):
     conn = connect_db()
     cursor = conn.cursor()
     try:
+        # Проверяем, существует ли пользователь с таким логином
+        cursor.execute('SELECT COUNT(*) FROM users WHERE login = ?', (login,))
+        if cursor.fetchone()[0] > 0:
+            print(f"Error adding user: User with login '{login}' already exists")
+            return
+
+        # Вставляем нового пользователя
         cursor.execute('''
         INSERT INTO users (login, password, role)
         VALUES (?, ?, ?)
@@ -57,7 +64,8 @@ def add_user(login, role='viewer'):
         reorder_ids()
     except sqlite3.IntegrityError as e:
         print(f"Error adding user: {e}")
-    conn.close()
+    finally:
+        conn.close()
 
 def get_user_by_id(user_id):
     conn = connect_db()
