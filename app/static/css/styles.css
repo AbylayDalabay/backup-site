@@ -310,3 +310,40 @@ table.dataTable tbody tr:hover {
     height: 100%;
     border: none;
 }
+
+/* Remove any fixed height and make sure the content dictates the height */
+.table .checkbox-container {
+    vertical-align: top;
+    padding: 0;
+  }
+  
+  .table .checkbox-container .input-group {
+    height: auto; /* Changed from 100% to auto */
+  }
+  
+  .table .checkbox-container .input-group-addon {
+    border: none;
+    border-radius: 0;
+    background-color: red;
+  }
+  
+  .table .checkbox-container .input-group > input {
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    outline: none;
+    height: auto; /* Changed from 100% to auto */
+  }
+  
+  .table .box {
+    height: auto; /* Changed from 100% to auto */
+    padding: 0;
+    display: inline-block;
+  }
+  
+  .table-bordered>tbody>tr>td, .table-bordered>tbody>tr>th, .table-bordered>tfoot>tr>td, .table-bordered>tfoot>tr>th, .table-bordered>thead>tr>td, .table-bordered>thead>tr>th {
+    vertical-align: middle;
+    white-space: normal; /* Ensure text can wrap and increase height */
+    word-wrap: break-word; /* Ensure long words break and do not overflow */
+  }
+  

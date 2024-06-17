@@ -5,6 +5,7 @@
     <title>Просмотр Базы Данных</title>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"/>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
@@ -15,33 +16,9 @@
         }
         table {
             width: 100%;
-            table-layout: fixed;
+            table-layout: auto; /* Ensure the table can adjust row heights */
         }
-        table th:nth-child(1), table td:nth-child(1) {
-            width: 2%;
-        }
-        table th:nth-child(2), table td:nth-child(2) {
-            width: 8%;
-        }
-        table th:nth-child(3), table td:nth-child(3) {
-            width: 20%;
-        }
-        table th:nth-child(4), table td:nth-child(4) {
-            width: 20%;
-        }
-        table th:nth-child(5), table td:nth-child(5) {
-            width: 7%;
-        }
-        table th:nth-child(6), table td:nth-child(6) {
-            width: 6%;
-        }
-        table th:nth-child(7), table td:nth-child(7) {
-            width: 5%;
-        }
-        table th:nth-child(8), table td:nth-child(8) {
-            width: 8%;
-        }
-    </style>
+    </style>    
 </head>
 <body>
     <div class="sidebar">
@@ -110,7 +87,7 @@
         <section id="table-section">
             <button class="toggle-button" id="toggle-table-section">Скрыть Раздел Таблицы</button>
             <div class="section-content table-container">
-                <table id="table-content" class="display" style="width:100%">
+                <table id="table-content" class="table table-bordered display" style="width:100%">
                     <thead>
                         <tr id="table-headers"></tr>
                     </thead>
@@ -139,7 +116,6 @@
             });
 
             function loadTableData(table) {
-                // Replace with your actual AJAX call to load table data
                 $.ajax({
                     url: '/get_table_data',
                     method: 'GET',
@@ -156,7 +132,6 @@
                 headers.empty();
                 rows.empty();
                 
-                // Assuming data is an array of objects
                 var columns = Object.keys(data[0]);
                 columns.forEach(function(column) {
                     headers.append('<th>' + column + '</th>');
