@@ -130,8 +130,11 @@ def insert_data_into_table(database, table_name, data, author='base'):
             question_id = generate_message_id()
             data_type = entry.get('data_type', 'manual')
             date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            link = entry.get('link', 'https://www.bcc.kz/')
-
+            
+            link = entry.get('link', 'https://www.bcc.kz/') if not entry.get('link') else entry.get('link')
+            if len(link) == 0:
+                link = 'https://www.bcc.kz/'
+                
             cursor.execute(check_query, (question,))
             exists = cursor.fetchone()[0]
 

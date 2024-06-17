@@ -224,6 +224,7 @@ $(document).ready(function() {
         var question = $('#question').val();
         var answer = $('#answer').val();
         var data_type = $('#data_type').val();
+        var link = $('#link').val();  // Get the link value
         var language = $('#language').val();
         var table = $('#table').val();
         if (language && table && question && answer) {
@@ -234,7 +235,7 @@ $(document).ready(function() {
                 data: JSON.stringify({ language: language, table: table }),
                 success: function(response) {
                     var question_id = response.last_row_id + 1;
-                    var new_data = [{ question: question, answer: answer, question_id: question_id, data_type: data_type }];
+                    var new_data = [{ question: question, answer: answer, question_id: question_id, data_type: data_type, link: link }];
                     $.ajax({
                         type: 'POST',
                         url: '/insert_data',
@@ -258,6 +259,7 @@ $(document).ready(function() {
             });
         }
     });
+    
 
     $('#toggle-json-section').click(function() {
         $('#json-section').toggle();

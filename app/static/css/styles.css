@@ -127,7 +127,7 @@ table.dataTable {
 table.dataTable th, table.dataTable td {
     padding: 8px;
     border: 1px solid #ddd;
-    vertical-align: middle;
+    vertical-align: top;
     word-wrap: break-word;
     white-space: normal;
     overflow: hidden;
